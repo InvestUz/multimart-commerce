@@ -123,7 +123,7 @@
             </svg>
             <h2 class="text-2xl font-semibold text-gray-900 mb-2">Your wishlist is empty</h2>
             <p class="text-gray-600 mb-6">Start adding products you love to your wishlist!</p>
-            <a href="{{ route('home') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition">
+            <a href="{{ route('dashboard') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition">
                 Continue Shopping
             </a>
         </div>

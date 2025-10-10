@@ -11,7 +11,7 @@
             <i class="fas fa-shopping-cart text-6xl text-gray-300 mb-4"></i>
             <h2 class="text-2xl font-semibold mb-2">Your cart is empty</h2>
             <p class="text-gray-600 mb-6">Add some products to get started!</p>
-            <a href="{{ route('home') }}" class="bg-primary text-white px-6 py-3 rounded-lg inline-block hover:bg-green-600">
+            <a href="{{ route('dashboard') }}" class="bg-primary text-white px-6 py-3 rounded-lg inline-block hover:bg-green-600">
                 Continue Shopping
             </a>
         </div>
@@ -99,7 +99,7 @@
                     <a href="{{ route('checkout') }}" class="block w-full bg-primary text-white text-center py-3 rounded-lg hover:bg-green-600 font-semibold mb-3">
                         Proceed to Checkout
                     </a>
-                    <a href="{{ route('home') }}" class="block w-full border border-gray-300 text-center py-3 rounded-lg hover:bg-gray-50">
+                    <a href="{{ route('dashboard') }}" class="block w-full border border-gray-300 text-center py-3 rounded-lg hover:bg-gray-50">
                         Continue Shopping
                     </a>
                 </div>

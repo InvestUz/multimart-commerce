@@ -7,7 +7,7 @@
     <!-- Breadcrumb -->
     <nav class="mb-6 text-sm">
         <ol class="flex items-center space-x-2 text-gray-600">
-            <li><a href="{{ route('home') }}" class="hover:text-blue-600">Home</a></li>
+            <li><a href="{{ route('dashboard') }}" class="hover:text-blue-600">Home</a></li>
             <li><span class="mx-2">/</span></li>
             @if($category->parent)
                 <li><a href="{{ route('category.show', $category->parent->slug) }}" class="hover:text-blue-600">{{ $category->parent->name }}</a></li>
@@ -232,7 +232,7 @@
                     Clear Filters
                 </a>
             @else
-                <a href="{{ route('home') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition">
+                <a href="{{ route('dashboard') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition">
                     Browse All Products
                 </a>
             @endif

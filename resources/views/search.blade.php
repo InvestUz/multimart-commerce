@@ -211,7 +211,7 @@
                     <li>Using fewer keywords</li>
                 </ul>
             </div>
-            <a href="{{ route('home') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition mt-6">
+            <a href="{{ route('dashboard') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition mt-6">
                 Browse All Products
             </a>
         </div>

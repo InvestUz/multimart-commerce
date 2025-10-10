@@ -11,7 +11,7 @@
             <i class="fas fa-box-open text-6xl text-gray-300 mb-4"></i>
             <h2 class="text-2xl font-semibold mb-2">No orders yet</h2>
             <p class="text-gray-600 mb-6">Start shopping to see your orders here!</p>
-            <a href="{{ route('home') }}" class="bg-primary text-white px-6 py-3 rounded-lg inline-block hover:bg-green-600">
+            <a href="{{ route('dashboard') }}" class="bg-primary text-white px-6 py-3 rounded-lg inline-block hover:bg-green-600">
                 Start Shopping
             </a>
         </div>

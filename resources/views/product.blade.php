@@ -7,7 +7,7 @@
     <!-- Breadcrumb -->
     <nav class="mb-6 text-sm">
         <ol class="flex items-center space-x-2 text-gray-600">
-            <li><a href="{{ route('home') }}" class="hover:text-blue-600">Home</a></li>
+            <li><a href="{{ route('dashboard') }}" class="hover:text-blue-600">Home</a></li>
             <li><span class="mx-2">/</span></li>
             @if($product->category)
             <li><a href="{{ route('category.show', $product->category->slug) }}" class="hover:text-blue-600">{{ $product->category->name }}</a></li>

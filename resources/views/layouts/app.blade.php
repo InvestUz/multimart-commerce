@@ -132,7 +132,7 @@
                 <div>
                     <h4 class="font-semibold mb-4">Quick Links</h4>
                     <ul class="space-y-2 text-gray-400">
-                        <li><a href="{{ route('home') }}" class="hover:text-white">Home</a></li>
+                        <li><a href="{{ route('dashboard') }}" class="hover:text-white">Home</a></li>
                         <li><a href="{{ route('search') }}" class="hover:text-white">Shop</a></li>
                         <li><a href="#" class="hover:text-white">About Us</a></li>
                         <li><a href="#" class="hover:text-white">Contact</a></li>
