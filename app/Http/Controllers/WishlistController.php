@@ -16,12 +16,12 @@ class WishlistController extends Controller
 
     public function index()
     {
-        $wishlistItems = Wishlist::with(['product.primaryImage', 'product.category', 'product.user'])
+        $wishlists = Wishlist::with(['product.primaryImage', 'product.category', 'product.user'])
             ->where('user_id', auth()->id())
             ->latest()
             ->get();
 
-        return view('wishlist.index', compact('wishlistItems'));
+        return view('wishlist.index', compact('wishlists'));
     }
 
     public function toggle(Request $request)

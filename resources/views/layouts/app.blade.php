@@ -32,7 +32,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center">
-                    <a href="{{ route('home') }}" class="text-2xl font-bold text-primary">
+                    <a href="{{ route('dashboard') }}" class="text-2xl font-bold text-primary">
                         <i class="fas fa-shopping-bag"></i> MultiMart
                     </a>
                 </div>

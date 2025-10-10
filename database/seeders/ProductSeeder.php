@@ -87,17 +87,40 @@ class ProductSeeder extends Seeder
         foreach ($appleProducts as $product) {
             $createdProduct = Product::create($product);
 
-            // Add dummy images (4 images per product)
-            for ($i = 1; $i <= 4; $i++) {
+            // Use placeholder images from placeholder services
+            // These are real, working image URLs
+            $imageUrls = [
+                'https://placehold.co/800x800/e0e0e0/666666?text=Product+Image+1',
+                'https://placehold.co/800x800/d0d0d0/555555?text=Product+Image+2',
+                'https://placehold.co/800x800/c0c0c0/444444?text=Product+Image+3',
+                'https://placehold.co/800x800/b0b0b0/333333?text=Product+Image+4',
+            ];
+
+            // Alternative: Use Picsum for random photos
+            // $imageUrls = [
+            //     'https://picsum.photos/seed/' . $createdProduct->id . '1/800/800',
+            //     'https://picsum.photos/seed/' . $createdProduct->id . '2/800/800',
+            //     'https://picsum.photos/seed/' . $createdProduct->id . '3/800/800',
+            //     'https://picsum.photos/seed/' . $createdProduct->id . '4/800/800',
+            // ];
+
+            // Alternative: Use DummyImage
+            // $imageUrls = [
+            //     'https://dummyimage.com/800x800/4a90e2/ffffff&text=' . urlencode($createdProduct->name . ' 1'),
+            //     'https://dummyimage.com/800x800/50c878/ffffff&text=' . urlencode($createdProduct->name . ' 2'),
+            //     'https://dummyimage.com/800x800/ff6b6b/ffffff&text=' . urlencode($createdProduct->name . ' 3'),
+            //     'https://dummyimage.com/800x800/ffd93d/ffffff&text=' . urlencode($createdProduct->name . ' 4'),
+            // ];
+
+            for ($i = 0; $i < 4; $i++) {
                 ProductImage::create([
                     'product_id' => $createdProduct->id,
-                    'image_path' => 'products/apple-' . $createdProduct->id . '-' . $i . '.jpg',
-                    'order' => $i,
-                    'is_primary' => $i === 1,
+                    'image_path' => $imageUrls[$i],
+                    'order' => $i + 1,
+                    'is_primary' => $i === 0,
                 ]);
             }
         }
-
         // Alibaba Products (Vendor ID: 3)
         $alibabaProducts = [
             [
