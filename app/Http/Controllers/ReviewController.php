@@ -28,7 +28,7 @@ class ReviewController extends Controller
             ->first();
 
         if ($existingReview) {
-            return response()->json([
+             return redirect()->back()->with([
                 'success' => false,
                 'message' => 'You have already reviewed this product!'
             ], 422);
@@ -55,7 +55,7 @@ class ReviewController extends Controller
         $product = Product::find($request->product_id);
         $product->updateRating();
 
-        return response()->json([
+         return redirect()->back()->with([
             'success' => true,
             'message' => 'Review submitted successfully! It will be visible after admin approval.'
         ]);

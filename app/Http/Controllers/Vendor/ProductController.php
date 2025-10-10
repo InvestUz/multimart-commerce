@@ -322,7 +322,7 @@ class ProductController extends Controller
 
         // Don't allow deleting the last image
         if ($image->product->images()->count() <= 1) {
-            return response()->json([
+             return redirect()->back()->with([
                 'success' => false,
                 'message' => 'Cannot delete the last image. Product must have at least one image.'
             ], 422);
@@ -343,7 +343,7 @@ class ProductController extends Controller
         Storage::disk('public')->delete($image->image_path);
         $image->delete();
 
-        return response()->json([
+         return redirect()->back()->with([
             'success' => true,
             'message' => 'Image deleted successfully!'
         ]);

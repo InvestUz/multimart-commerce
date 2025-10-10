@@ -49,7 +49,7 @@ class WishlistController extends Controller
             $message = 'Added to wishlist';
         }
 
-        return response()->json([
+         return redirect()->back()->with([
             'success' => true,
             'in_wishlist' => $inWishlist,
             'message' => $message

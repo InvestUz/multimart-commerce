@@ -43,7 +43,7 @@ class CartController extends Controller
 
         // Check if product is available
         if (!$product->canBePurchased($request->quantity)) {
-            return response()->json([
+            return redirect()->back()->with([
                 'success' => false,
                 'message' => 'Product is not available or insufficient stock!'
             ], 422);
@@ -61,7 +61,7 @@ class CartController extends Controller
             $newQuantity = $cartItem->quantity + $request->quantity;
 
             if (!$product->canBePurchased($newQuantity)) {
-                return response()->json([
+                 return redirect()->back()->with([
                     'success' => false,
                     'message' => 'Not enough stock available!'
                 ], 422);
@@ -83,7 +83,7 @@ class CartController extends Controller
 
         $cartCount = Cart::where('user_id', auth()->id())->sum('quantity');
 
-        return response()->json([
+         return redirect()->back()->with([
             'success' => true,
             'message' => 'Product added to cart successfully!',
             'cart_count' => $cartCount
@@ -102,7 +102,7 @@ class CartController extends Controller
 
         // Check stock availability
         if (!$cart->product->canBePurchased($request->quantity)) {
-            return response()->json([
+             return redirect()->back()->with([
                 'success' => false,
                 'message' => 'Not enough stock available!'
             ], 422);
@@ -112,7 +112,7 @@ class CartController extends Controller
             'quantity' => $request->quantity,
         ]);
 
-        return response()->json([
+         return redirect()->back()->with([
             'success' => true,
             'message' => 'Cart updated successfully!',
             'subtotal' => $cart->subtotal
@@ -127,7 +127,7 @@ class CartController extends Controller
 
         $cart->delete();
 
-        return response()->json([
+         return redirect()->back()->with([
             'success' => true,
             'message' => 'Item removed from cart!'
         ]);
@@ -141,6 +141,6 @@ class CartController extends Controller
             $count = Cart::where('user_id', auth()->id())->sum('quantity');
         }
 
-        return response()->json(['count' => $count]);
+         return redirect()->back()->with(['count' => $count]);
     }
 }

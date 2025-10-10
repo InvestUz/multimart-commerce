@@ -45,6 +45,7 @@ Route::middleware(['auth', 'customer'])->group(function () {
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
 });
 
+
 // Super Admin Routes
 Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'super_admin'])->group(function () {
     Route::get('/dashboard', [SuperAdmin\DashboardController::class, 'index'])->name('dashboard');
