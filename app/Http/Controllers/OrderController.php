@@ -1,99 +1,194 @@
 <?php
 
-namespace App\Http\Controllers\SuperAdmin;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Models\Cart;
 use App\Models\Order;
+use App\Models\OrderItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    public function index(Request $request)
+    public function __construct()
     {
-        $query = Order::with(['user', 'items']);
+        $this->middleware('auth');
+    }
 
-        // Filter by status
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+    public function checkout()
+    {
+        $cartItems = Cart::with(['product.primaryImage', 'product.user'])
+            ->where('user_id', auth()->id())
+            ->get();
+
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty!');
         }
 
-        // Filter by payment status
-        if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
+        // Validate all items are still available
+        foreach ($cartItems as $item) {
+            if (!$item->isAvailable()) {
+                return redirect()->route('cart.index')
+                    ->with('error', "Product '{$item->product->name}' is no longer available.");
+            }
         }
 
-        // Search by order number or customer
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('order_number', 'like', "%{$search}%")
-                    ->orWhere('customer_name', 'like', "%{$search}%")
-                    ->orWhere('customer_email', 'like', "%{$search}%")
-                    ->orWhere('customer_phone', 'like', "%{$search}%");
+        $subtotal = $cartItems->sum(function ($item) {
+            return $item->price * $item->quantity;
+        });
+
+        $shipping = 4.99;
+        $total = $subtotal + $shipping;
+
+        return view('checkout', compact('cartItems', 'subtotal', 'shipping', 'total'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'customer_email' => 'required|email',
+            'customer_phone' => 'required|string|max:20',
+            'shipping_address' => 'required|string',
+            'city' => 'nullable|string|max:100',
+            'postal_code' => 'nullable|string|max:20',
+            'payment_method' => 'required|in:cash_on_delivery,credit_card,paypal',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        $cartItems = Cart::with('product.user')
+            ->where('user_id', auth()->id())
+            ->get();
+
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty!');
+        }
+
+        // Validate all items before processing
+        foreach ($cartItems as $item) {
+            if (!$item->isAvailable()) {
+                return redirect()->route('cart.index')
+                    ->with('error', "Product '{$item->product->name}' is no longer available.");
+            }
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $subtotal = $cartItems->sum(function ($item) {
+                return $item->price * $item->quantity;
             });
-        }
 
-        // Date range filter
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
+            $shipping = 4.99;
+            $total = $subtotal + $shipping;
 
-        $orders = $query->latest()->paginate(20);
+            // Create order
+            $order = Order::create([
+                'user_id' => auth()->id(),
+                'customer_name' => $request->customer_name,
+                'customer_email' => $request->customer_email,
+                'customer_phone' => $request->customer_phone,
+                'shipping_address' => $request->shipping_address,
+                'city' => $request->city,
+                'postal_code' => $request->postal_code,
+                'country' => 'Uzbekistan',
+                'subtotal' => $subtotal,
+                'shipping_cost' => $shipping,
+                'total' => $total,
+                'payment_method' => $request->payment_method,
+                'status' => 'pending',
+                'payment_status' => 'pending',
+                'notes' => $request->notes,
+            ]);
 
-        return view('super-admin.orders.index', compact('orders'));
+            // Create order items
+            foreach ($cartItems as $cartItem) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $cartItem->product_id,
+                    'vendor_id' => $cartItem->product->user_id,
+                    'product_name' => $cartItem->product->name,
+                    'product_sku' => $cartItem->product->sku,
+                    'quantity' => $cartItem->quantity,
+                    'price' => $cartItem->price,
+                    'size' => $cartItem->size,
+                    'color' => $cartItem->color,
+                    'total' => $cartItem->price * $cartItem->quantity,
+                ]);
+
+                // Reduce stock
+                $cartItem->product->decrement('stock', $cartItem->quantity);
+                $cartItem->product->increment('total_sales', $cartItem->quantity);
+            }
+
+            // Clear cart
+            Cart::where('user_id', auth()->id())->delete();
+
+            DB::commit();
+
+            return redirect()->route('orders.show', $order)
+                ->with('success', 'Order placed successfully! Order number: ' . $order->order_number);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()
+                ->with('error', 'Failed to place order. Please try again.')
+                ->withInput();
+        }
+    }
+
+    public function index()
+    {
+        $orders = Order::where('user_id', auth()->id())
+            ->with(['items.product.primaryImage'])
+            ->latest()
+            ->paginate(10);
+
+        return view('orders.index', compact('orders'));
     }
 
     public function show(Order $order)
     {
-        $order->load(['user', 'items.product.primaryImage', 'items.vendor']);
-
-        return view('super-admin.orders.show', compact('order'));
-    }
-
-    public function updateStatus(Request $request, Order $order)
-    {
-        $request->validate([
-            'status' => 'required|in:pending,processing,shipped,delivered,cancelled,returned',
-            'admin_notes' => 'nullable|string|max:1000',
-        ]);
-
-        $order->update([
-            'status' => $request->status,
-            'admin_notes' => $request->admin_notes,
-        ]);
-
-        // Update timestamps based on status
-        if ($request->status === 'shipped' && !$order->shipped_at) {
-            $order->update(['shipped_at' => now()]);
-        } elseif ($request->status === 'delivered' && !$order->delivered_at) {
-            $order->update([
-                'delivered_at' => now(),
-                'payment_status' => 'paid', // Auto mark as paid on delivery
-            ]);
+        // Check authorization
+        if ($order->user_id !== auth()->id() && !auth()->user()->isSuperAdmin()) {
+            abort(403, 'Unauthorized access to this order.');
         }
 
-        return redirect()->back()
-            ->with('success', 'Order status updated successfully!');
+        $order->load(['items.product.primaryImage', 'items.vendor']);
+
+        return view('orders.show', compact('order'));
     }
 
-    public function updatePaymentStatus(Request $request, Order $order)
+    public function cancel(Order $order)
     {
-        $request->validate([
-            'payment_status' => 'required|in:pending,paid,failed,refunded',
-        ]);
-
-        $data = ['payment_status' => $request->payment_status];
-
-        if ($request->payment_status === 'paid' && !$order->paid_at) {
-            $data['paid_at'] = now();
+        // Check authorization
+        if ($order->user_id !== auth()->id()) {
+            abort(403);
         }
 
-        $order->update($data);
+        if (!$order->canBeCancelled()) {
+            return redirect()->back()->with('error', 'This order cannot be cancelled.');
+        }
 
-        return redirect()->back()
-            ->with('success', 'Payment status updated successfully!');
+        DB::beginTransaction();
+
+        try {
+            // Restore stock
+            foreach ($order->items as $item) {
+                if ($item->product) {
+                    $item->product->increment('stock', $item->quantity);
+                    $item->product->decrement('total_sales', $item->quantity);
+                }
+            }
+
+            $order->update(['status' => 'cancelled']);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Order cancelled successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to cancel order. Please try again.');
+        }
     }
 }

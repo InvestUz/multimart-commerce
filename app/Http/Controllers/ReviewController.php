@@ -1,98 +1,104 @@
 <?php
 
-namespace App\Http\Controllers\SuperAdmin;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Review;
+use App\Models\Product;
+use App\Models\Order;
 use Illuminate\Http\Request;
 
 class ReviewController extends Controller
 {
-    public function index(Request $request)
+    public function __construct()
     {
-        $query = Review::with(['user', 'product']);
-
-        // Filter by approval status
-        if ($request->filled('status')) {
-            if ($request->status === 'approved') {
-                $query->where('is_approved', true);
-            } elseif ($request->status === 'pending') {
-                $query->where('is_approved', false);
-            }
-        }
-
-        // Filter by rating
-        if ($request->filled('rating')) {
-            $query->where('rating', $request->rating);
-        }
-
-        // Search by product or user
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('product', function ($pq) use ($search) {
-                    $pq->where('name', 'like', "%{$search}%");
-                })->orWhereHas('user', function ($uq) use ($search) {
-                    $uq->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
-                });
-            });
-        }
-
-        $reviews = $query->latest()->paginate(20);
-
-        return view('super-admin.reviews.index', compact('reviews'));
+        $this->middleware('auth');
     }
 
-    public function approve(Review $review)
-    {
-        $review->update(['is_approved' => true]);
-
-        // Update product rating
-        $review->product->updateRating();
-
-        return redirect()->back()
-            ->with('success', 'Review approved successfully!');
-    }
-
-    public function reject(Review $review)
-    {
-        $review->update(['is_approved' => false]);
-
-        // Update product rating
-        $review->product->updateRating();
-
-        return redirect()->back()
-            ->with('success', 'Review rejected successfully!');
-    }
-
-    public function respond(Request $request, Review $review)
+    public function store(Request $request)
     {
         $request->validate([
-            'admin_response' => 'required|string|max:1000',
+            'product_id' => 'required|exists:products,id',
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        // Check if user already reviewed this product
+        $existingReview = Review::where('user_id', auth()->id())
+            ->where('product_id', $request->product_id)
+            ->first();
+
+        if ($existingReview) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You have already reviewed this product!'
+            ], 422);
+        }
+
+        // Check if user purchased this product
+        $hasPurchased = Order::where('user_id', auth()->id())
+            ->whereHas('items', function ($query) use ($request) {
+                $query->where('product_id', $request->product_id);
+            })
+            ->where('status', 'delivered')
+            ->exists();
+
+        $review = Review::create([
+            'user_id' => auth()->id(),
+            'product_id' => $request->product_id,
+            'rating' => $request->rating,
+            'comment' => $request->comment,
+            'is_approved' => false, // Requires admin approval
+            'is_verified_purchase' => $hasPurchased,
+        ]);
+
+        // Update product rating (even if not approved yet, for immediate feedback)
+        $product = Product::find($request->product_id);
+        $product->updateRating();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Review submitted successfully! It will be visible after admin approval.'
+        ]);
+    }
+
+    public function update(Request $request, Review $review)
+    {
+        if ($review->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
         ]);
 
         $review->update([
-            'admin_response' => $request->admin_response,
-            'responded_at' => now(),
+            'rating' => $request->rating,
+            'comment' => $request->comment,
+            'is_approved' => false, // Reset approval status
         ]);
 
-        return redirect()->back()
-            ->with('success', 'Response added successfully!');
+        // Update product rating
+        $review->product->updateRating();
+
+        return redirect()->back()->with('success', 'Review updated successfully!');
     }
 
     public function destroy(Review $review)
     {
+        if ($review->user_id !== auth()->id() && !auth()->user()->isSuperAdmin()) {
+            abort(403);
+        }
+
         $productId = $review->product_id;
         $review->delete();
 
         // Update product rating
-        $product = \App\Models\Product::find($productId);
+        $product = Product::find($productId);
         if ($product) {
             $product->updateRating();
         }
 
-        return redirect()->back()
-            ->with('success', 'Review deleted successfully!');
+        return redirect()->back()->with('success', 'Review deleted successfully!');
     }
 }
