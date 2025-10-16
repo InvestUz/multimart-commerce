@@ -20,17 +20,6 @@ Route::get('/search', [HomeController::class, 'search'])->name('search');
 
 require __DIR__ . '/auth.php';
 
-Route::resource('sub-categories', SubCategoryController::class, [
-    'names' => [
-        'index' => 'super-admin.sub-categories.index',
-        'create' => 'super-admin.sub-categories.create',
-        'store' => 'super-admin.sub-categories.store',
-        'show' => 'super-admin.sub-categories.show',
-        'edit' => 'super-admin.sub-categories.edit',
-        'update' => 'super-admin.sub-categories.update',
-        'destroy' => 'super-admin.sub-categories.destroy',
-    ]
-]);
 
 // API endpoint to get sub-categories by category (for frontend)
 Route::get('sub-categories/by-category/{categoryId}', [SubCategoryController::class, 'getByCategory'])
@@ -103,6 +92,8 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'super_a
     Route::get('/reviews', [SuperAdmin\ReviewController::class, 'index'])->name('reviews.index');
     Route::post('/reviews/{review}/approve', [SuperAdmin\ReviewController::class, 'approve'])->name('reviews.approve');
     Route::delete('/reviews/{review}', [SuperAdmin\ReviewController::class, 'destroy'])->name('reviews.destroy');
+
+    Route::resource('sub-categories', SubCategoryController::class);
 });
 
 // Vendor Routes

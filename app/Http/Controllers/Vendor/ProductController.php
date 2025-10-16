@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\Category;
+use App\Models\SubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -94,6 +95,7 @@ class ProductController extends Controller
     {
         $request->validate([
             'category_id' => 'required|exists:categories,id',
+            'sub_category_id' => 'required|exists:sub_categories,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
@@ -112,13 +114,11 @@ class ProductController extends Controller
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
-        // Calculate discount percentage
         $discountPercentage = 0;
         if ($request->old_price && $request->old_price > $request->price) {
             $discountPercentage = round((($request->old_price - $request->price) / $request->old_price) * 100);
         }
 
-        // Filter empty sizes and colors
         $sizes = $request->sizes ? array_filter($request->sizes, function ($value) {
             return !empty(trim($value));
         }) : null;
@@ -127,10 +127,10 @@ class ProductController extends Controller
             return !empty(trim($value));
         }) : null;
 
-        // Create product
         $product = Product::create([
             'user_id' => auth()->id(),
             'category_id' => $request->category_id,
+            'sub_category_id' => $request->sub_category_id,
             'name' => $request->name,
             'slug' => Str::slug($request->name),
             'description' => $request->description,
@@ -148,7 +148,6 @@ class ProductController extends Controller
             'is_active' => true,
         ]);
 
-        // Upload images
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $index => $image) {
                 $path = $image->store('products', 'public');
@@ -165,6 +164,7 @@ class ProductController extends Controller
         return redirect()->route('vendor.products.index')
             ->with('success', 'Product created successfully!');
     }
+
 
     public function show(Product $product)
     {
@@ -198,26 +198,30 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
-        // Check ownership
         if ($product->user_id !== auth()->id()) {
             abort(403, 'Unauthorized access.');
         }
 
         $categories = Category::active()->orderBy('name')->get();
+        $subCategories = SubCategory::where('category_id', $product->category_id)
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get();
+
         $product->load('images');
 
-        return view('vendor.products.edit', compact('product', 'categories'));
+        return view('vendor.products.edit', compact('product', 'categories', 'subCategories'));
     }
 
     public function update(Request $request, Product $product)
     {
-        // Check ownership
         if ($product->user_id !== auth()->id()) {
             abort(403, 'Unauthorized access.');
         }
 
         $request->validate([
             'category_id' => 'required|exists:categories,id',
+            'sub_category_id' => 'required|exists:sub_categories,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
@@ -235,13 +239,11 @@ class ProductController extends Controller
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
-        // Calculate discount percentage
         $discountPercentage = 0;
         if ($request->old_price && $request->old_price > $request->price) {
             $discountPercentage = round((($request->old_price - $request->price) / $request->old_price) * 100);
         }
 
-        // Filter empty sizes and colors
         $sizes = $request->sizes ? array_filter($request->sizes, function ($value) {
             return !empty(trim($value));
         }) : null;
@@ -250,9 +252,9 @@ class ProductController extends Controller
             return !empty(trim($value));
         }) : null;
 
-        // Update product
         $product->update([
             'category_id' => $request->category_id,
+            'sub_category_id' => $request->sub_category_id,
             'name' => $request->name,
             'slug' => Str::slug($request->name),
             'description' => $request->description,
@@ -269,7 +271,6 @@ class ProductController extends Controller
             'colors' => $colors ? array_values($colors) : null,
         ]);
 
-        // Upload new images if provided
         if ($request->hasFile('images')) {
             $currentMaxOrder = $product->images()->max('order') ?? 0;
 
@@ -322,7 +323,7 @@ class ProductController extends Controller
 
         // Don't allow deleting the last image
         if ($image->product->images()->count() <= 1) {
-             return redirect()->back()->with([
+            return redirect()->back()->with([
                 'success' => false,
                 'message' => 'Cannot delete the last image. Product must have at least one image.'
             ], 422);
@@ -343,7 +344,7 @@ class ProductController extends Controller
         Storage::disk('public')->delete($image->image_path);
         $image->delete();
 
-         return redirect()->back()->with([
+        return redirect()->back()->with([
             'success' => true,
             'message' => 'Image deleted successfully!'
         ]);

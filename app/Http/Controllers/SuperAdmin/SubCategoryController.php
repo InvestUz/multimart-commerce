@@ -10,11 +10,6 @@ use Illuminate\Support\Str;
 
 class SubCategoryController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['auth', 'admin']);
-    }
-
     public function index()
     {
         $subCategories = SubCategory::with('category')
@@ -111,7 +106,6 @@ class SubCategoryController extends Controller
         return view('super-admin.sub-categories.show', compact('subCategory'));
     }
 
-    // API endpoint to get sub-categories by category
     public function getByCategory($categoryId)
     {
         $subCategories = SubCategory::where('category_id', $categoryId)

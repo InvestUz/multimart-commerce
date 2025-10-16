@@ -4,6 +4,7 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\SubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -11,9 +12,9 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::withCount('products')
+        $categories = Category::withCount('products', 'subCategories')
             ->orderBy('order')
-            ->paginate(20);
+            ->get();
 
         return view('super-admin.categories.index', compact('categories'));
     }
@@ -38,7 +39,7 @@ class CategoryController extends Controller
             'icon' => $request->icon ?? 'fa-box',
             'color' => $request->color ?? '#4CAF50',
             'order' => $request->order ?? 0,
-            'is_active' => $request->has('is_active'),
+            'is_active' => true,
         ]);
 
         return redirect()->route('super-admin.categories.index')
@@ -57,14 +58,15 @@ class CategoryController extends Controller
             'icon' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:20',
             'order' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
         ]);
 
         $category->update([
             'name' => $request->name,
             'slug' => Str::slug($request->name),
-            'icon' => $request->icon ?? 'fa-box',
-            'color' => $request->color ?? '#4CAF50',
-            'order' => $request->order ?? 0,
+            'icon' => $request->icon,
+            'color' => $request->color,
+            'order' => $request->order,
             'is_active' => $request->has('is_active'),
         ]);
 
@@ -74,9 +76,9 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
-        if ($category->products()->count() > 0) {
+        if ($category->products()->count() > 0 || $category->subCategories()->count() > 0) {
             return redirect()->back()
-                ->with('error', 'Cannot delete category with existing products! Please reassign or delete the products first.');
+                ->with('error', 'Cannot delete category with existing products or sub-categories!');
         }
 
         $category->delete();
@@ -87,7 +89,9 @@ class CategoryController extends Controller
 
     public function show(Category $category)
     {
-        $category->load(['products.primaryImage', 'products.user']);
+        $category->load(['products.primaryImage', 'products.user', 'subCategories' => function ($query) {
+            $query->orderBy('order')->withCount('products');
+        }]);
 
         return view('super-admin.categories.show', compact('category'));
     }
