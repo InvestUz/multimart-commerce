@@ -7,7 +7,9 @@ use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SuperAdmin;
+use App\Http\Controllers\SuperAdmin\SubCategoryController;
 use App\Http\Controllers\Vendor;
+use App\Models\SubCategory;
 use Illuminate\Support\Facades\Route;
 
 // Public Routes
@@ -17,6 +19,31 @@ Route::get('/product/{slug}', [HomeController::class, 'product'])->name('product
 Route::get('/search', [HomeController::class, 'search'])->name('search');
 
 require __DIR__ . '/auth.php';
+
+Route::resource('sub-categories', SubCategoryController::class, [
+    'names' => [
+        'index' => 'super-admin.sub-categories.index',
+        'create' => 'super-admin.sub-categories.create',
+        'store' => 'super-admin.sub-categories.store',
+        'show' => 'super-admin.sub-categories.show',
+        'edit' => 'super-admin.sub-categories.edit',
+        'update' => 'super-admin.sub-categories.update',
+        'destroy' => 'super-admin.sub-categories.destroy',
+    ]
+]);
+
+// API endpoint to get sub-categories by category (for frontend)
+Route::get('sub-categories/by-category/{categoryId}', [SubCategoryController::class, 'getByCategory'])
+    ->name('sub-categories.by-category');
+
+Route::get('/api/sub-categories/by-category/{categoryId}', function ($categoryId) {
+    $subCategories = SubCategory::where('category_id', $categoryId)
+        ->where('is_active', true)
+        ->orderBy('order')
+        ->get(['id', 'name', 'slug']);
+
+    return $subCategories;
+});
 
 // Customer Routes (Authenticated)
 Route::middleware(['auth', 'customer'])->group(function () {

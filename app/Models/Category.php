@@ -59,4 +59,15 @@ class Category extends Model
     {
         return $this->products()->active()->count();
     }
+
+
+    public function subCategories()
+    {
+        return $this->hasMany(SubCategory::class);
+    }
+
+    public function activeSubCategories()
+    {
+        return $this->hasMany(SubCategory::class)->where('is_active', true)->orderBy('order');
+    }
 }

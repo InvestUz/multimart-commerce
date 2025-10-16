@@ -17,6 +17,7 @@ class Product extends Model
     protected $fillable = [
         'user_id',
         'category_id',
+        'sub_category_id',  // Add this line
         'name',
         'slug',
         'description',
@@ -76,6 +77,18 @@ class Product extends Model
                 $product->slug = Str::slug($product->name);
             }
         });
+    }
+
+    // Add this relationship:
+    public function subCategory()
+    {
+        return $this->belongsTo(SubCategory::class);
+    }
+
+    // Add this scope:
+    public function scopeBySubCategory($query, $subCategoryId)
+    {
+        return $query->where('sub_category_id', $subCategoryId);
     }
 
     // Relationships
