@@ -61,7 +61,7 @@
                             <span class="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" id="cart-count">0</span>
                         </a>
                         <div class="relative group">
-                            <button class="flex items-center space-x-2 text-gray-700 hover:text-primary">
+                            <button class="flex items-center space-x-2 text-gray-700 hover:text -primary">
                                 <i class="fas fa-user-circle text-2xl"></i>
                                 <span>{{ auth()->user()->name }}</span>
                                 <i class="fas fa-chevron-down text-xs"></i>

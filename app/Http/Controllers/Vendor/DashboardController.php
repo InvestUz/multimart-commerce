@@ -12,11 +12,19 @@ class DashboardController extends Controller
 {
     public function index()
     {
+
         $vendorId = auth()->id();
 
         $totalProducts = Product::where('user_id', $vendorId)->count();
         $activeProducts = Product::where('user_id', $vendorId)->where('is_active', true)->count();
         $totalOrders = OrderItem::where('vendor_id', $vendorId)->distinct('order_id')->count();
+        $outOfStock = Product::where('user_id', $vendorId)->where('stock', '<=', 0)->count();
+        $lowStockProducts = Product::where('user_id', $vendorId)->where('stock', '<=', 5)->count();
+        $pendingOrders = OrderItem::where('vendor_id', $vendorId)
+            ->whereHas('order', function ($q) {
+                $q->where('status', 'pending');
+            })
+            ->count();
         $totalRevenue = OrderItem::where('vendor_id', $vendorId)
             ->whereHas('order', function ($q) {
                 $q->where('status', 'delivered');
@@ -41,7 +49,10 @@ class DashboardController extends Controller
             'totalOrders',
             'totalRevenue',
             'recentOrders',
-            'topProducts'
+            'topProducts',
+            'pendingOrders',
+            'outOfStock',
+            'lowStockProducts'
         ));
     }
 }

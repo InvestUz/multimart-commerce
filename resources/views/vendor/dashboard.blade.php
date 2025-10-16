@@ -143,7 +143,7 @@
         </div>
     </div>
 
-    <!-- Low Stock Alert -->
+    {{-- <!-- Low Stock Alert -->
     @if($lowStockProducts->isNotEmpty())
     <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mt-8">
         <div class="flex items-start gap-3">
@@ -173,6 +173,6 @@
             </div>
         </div>
     </div>
-    @endif
+    @endif --}}
 </div>
 @endsection
