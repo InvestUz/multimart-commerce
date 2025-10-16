@@ -120,7 +120,7 @@
                             <p class="text-xs text-gray-500">{{ $order->created_at->format('M d, Y h:i A') }}</p>
                         </div>
                         <div class="text-right">
-                            <p class="font-bold text-primary">${{ number_format($order->total, 2) }}</p>
+                            <p class="font-bold text-primary">{{ number_format($order->total, 2) }} So'm</p>
                             <span class="text-xs px-2 py-1 rounded-full
                                 @if($order->status === 'delivered') bg-green-100 text-green-800
                                 @elseif($order->status === 'cancelled') bg-red-100 text-red-800

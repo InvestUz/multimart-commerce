@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name') }} - @yield('title', 'Multi-Vendor E-Commerce')</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -26,6 +27,7 @@
     </script>
     @stack('styles')
 </head>
+
 <body class="bg-gray-50">
     <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
@@ -40,10 +42,11 @@
                 <!-- Search -->
                 <div class="flex-1 max-w-lg mx-8">
                     <form action="{{ route('search') }}" method="GET" class="relative">
-                        <input type="text" name="query" placeholder="Search products..." 
+                        <input type="text" name="query" placeholder="Search products..."
                             class="w-full px-4 py-2 rounded-full border focus:outline-none focus:ring-2 focus:ring-primary"
                             value="{{ request('query') }}">
-                        <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-primary text-white px-4 py-1 rounded-full">
+                        <button type="submit"
+                            class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-primary text-white px-4 py-1 rounded-full">
                             <i class="fas fa-search"></i>
                         </button>
                     </form>
@@ -54,21 +57,27 @@
                     @auth
                         <a href="{{ route('wishlist.index') }}" class="text-gray-600 hover:text-primary relative">
                             <i class="fas fa-heart text-xl"></i>
-                            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" id="wishlist-count">0</span>
+                            <span
+                                class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                                id="wishlist-count">0</span>
                         </a>
                         <a href="{{ route('cart.index') }}" class="text-gray-600 hover:text-primary relative">
                             <i class="fas fa-shopping-cart text-xl"></i>
-                            <span class="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" id="cart-count">0</span>
+                            <span
+                                class="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"
+                                id="cart-count">0</span>
                         </a>
                         <div class="relative group">
-                            <button class="flex items-center space-x-2 text-gray-700 hover:text -primary">
+                            <button class="flex items-center space-x-2 text-gray-700 hover:text-primary">
                                 <i class="fas fa-user-circle text-2xl"></i>
                                 <span>{{ auth()->user()->name }}</span>
                                 <i class="fas fa-chevron-down text-xs"></i>
                             </button>
-                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden group-hover:block">
-                                @if(auth()->user()->isSuperAdmin())
-                                    <a href="{{ route('super-admin.dashboard') }}" class="block px-4 py-2 hover:bg-gray-100">
+                            <div
+                                class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden group-hover:block">
+                                @if (auth()->user()->isSuperAdmin())
+                                    <a href="{{ route('super-admin.dashboard') }}"
+                                        class="block px-4 py-2 hover:bg-gray-100">
                                         <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
                                     </a>
                                 @elseif(auth()->user()->isVendor())
@@ -81,7 +90,8 @@
                                 </a>
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
-                                    <button type="submit" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600">
+                                    <button type="submit"
+                                        class="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600">
                                         <i class="fas fa-sign-out-alt mr-2"></i> Logout
                                     </button>
                                 </form>
@@ -91,7 +101,8 @@
                         <a href="{{ route('login') }}" class="text-gray-600 hover:text-primary">
                             <i class="fas fa-sign-in-alt mr-1"></i> Login
                         </a>
-                        <a href="{{ route('register') }}" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-green-600">
+                        <a href="{{ route('register') }}"
+                            class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-green-600">
                             Register
                         </a>
                     @endauth
@@ -102,15 +113,16 @@
 
     <!-- Main Content -->
     <main class="min-h-screen">
-        @if(session('success'))
+        @if (session('success'))
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative"
+                    role="alert">
                     <span class="block sm:inline">{{ session('success') }}</span>
                 </div>
             </div>
         @endif
 
-        @if(session('error'))
+        @if (session('error'))
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
                 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
                     <span class="block sm:inline">{{ session('error') }}</span>
@@ -163,15 +175,37 @@
     </footer>
 
     <script>
-        // Update cart count
-        @auth
-        fetch('{{ route("cart.count") }}')
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('cart-count').textContent = data.count;
-            });
+        // Update cart and wishlist counts
+        function updateCounts() {
+            @auth
+            // Update cart count
+            fetch('{{ route('cart.count') }}')
+                .then(res => res.json())
+                .then(data => {
+                    const cartCountElement = document.getElementById('cart-count');
+                    if (cartCountElement) {
+                        cartCountElement.textContent = data.count || '0';
+                    }
+                })
+                .catch(err => console.error('Error updating cart count:', err));
+
+            // Update wishlist count
+            fetch('{{ route('wishlist.count') }}')
+                .then(res => res.json())
+                .then(data => {
+                    const wishlistCountElement = document.getElementById('wishlist-count');
+                    if (wishlistCountElement) {
+                        wishlistCountElement.textContent = data.count || '0';
+                    }
+                })
+                .catch(err => console.error('Error updating wishlist count:', err));
         @endauth
+        }
+
+        // Update on page load
+        document.addEventListener('DOMContentLoaded', updateCounts);
     </script>
     @stack('scripts')
 </body>
+
 </html>

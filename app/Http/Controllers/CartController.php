@@ -1,11 +1,11 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class CartController extends Controller
 {
@@ -41,36 +41,26 @@ class CartController extends Controller
 
         $product = Product::findOrFail($request->product_id);
 
-        // Check if product is available
         if (!$product->canBePurchased($request->quantity)) {
-            return redirect()->back()->with([
-                'success' => false,
-                'message' => 'Product is not available or insufficient stock!'
-            ], 422);
+            return redirect()->back()->with('error', 'Product is not available or insufficient stock!');
         }
 
-        // Check if item already exists in cart
         $cartItem = Cart::where('user_id', auth()->id())
             ->where('product_id', $product->id)
-            ->where('size', $request->size)
-            ->where('color', $request->color)
+            ->where('size', $request->size ?? '')
+            ->where('color', $request->color ?? '')
             ->first();
 
         if ($cartItem) {
-            // Update quantity
             $newQuantity = $cartItem->quantity + $request->quantity;
 
             if (!$product->canBePurchased($newQuantity)) {
-                 return redirect()->back()->with([
-                    'success' => false,
-                    'message' => 'Not enough stock available!'
-                ], 422);
+                return redirect()->back()->with('error', 'Not enough stock available!');
             }
 
             $cartItem->quantity = $newQuantity;
             $cartItem->save();
         } else {
-            // Create new cart item
             Cart::create([
                 'user_id' => auth()->id(),
                 'product_id' => $product->id,
@@ -81,59 +71,64 @@ class CartController extends Controller
             ]);
         }
 
-        $cartCount = Cart::where('user_id', auth()->id())->sum('quantity');
-
-         return redirect()->back()->with([
-            'success' => true,
-            'message' => 'Product added to cart successfully!',
-            'cart_count' => $cartCount
-        ]);
+        return redirect()->back()->with('success', 'Product added to cart successfully!');
     }
 
-    public function update(Request $request, Cart $cart)
+    public function update(Request $request, Cart $cart): JsonResponse
     {
         if ($cart->user_id !== auth()->id()) {
-            abort(403);
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
         $request->validate([
             'quantity' => 'required|integer|min:1',
         ]);
 
-        // Check stock availability
         if (!$cart->product->canBePurchased($request->quantity)) {
-             return redirect()->back()->with([
-                'success' => false,
-                'message' => 'Not enough stock available!'
-            ], 422);
+            return response()->json(['success' => false, 'message' => 'Not enough stock available!'], 422);
         }
 
         $cart->update([
             'quantity' => $request->quantity,
         ]);
 
-         return redirect()->back()->with([
+        $cartItems = Cart::where('user_id', auth()->id())->get();
+        $subtotal = $cartItems->sum(function ($item) {
+            return $item->price * $item->quantity;
+        });
+
+        return response()->json([
             'success' => true,
             'message' => 'Cart updated successfully!',
-            'subtotal' => $cart->subtotal
+            'subtotal' => $cart->price * $request->quantity,
+            'cart_subtotal' => $subtotal,
+            'cart_total' => $subtotal + 4.99,
         ]);
     }
 
-    public function destroy(Cart $cart)
+    public function destroy(Cart $cart): JsonResponse
     {
         if ($cart->user_id !== auth()->id()) {
-            abort(403);
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
         $cart->delete();
 
-         return redirect()->back()->with([
+        $cartItems = Cart::where('user_id', auth()->id())->get();
+        $subtotal = $cartItems->sum(function ($item) {
+            return $item->price * $item->quantity;
+        });
+
+        return response()->json([
             'success' => true,
-            'message' => 'Item removed from cart!'
+            'message' => 'Item removed from cart!',
+            'cart_count' => $cartItems->sum('quantity'),
+            'cart_subtotal' => $subtotal,
+            'cart_total' => $subtotal + 4.99,
         ]);
     }
 
-    public function count()
+    public function count(): JsonResponse
     {
         $count = 0;
 
@@ -141,6 +136,6 @@ class CartController extends Controller
             $count = Cart::where('user_id', auth()->id())->sum('quantity');
         }
 
-         return redirect()->back()->with(['count' => $count]);
+        return response()->json(['count' => $count]);
     }
 }

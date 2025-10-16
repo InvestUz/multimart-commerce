@@ -33,7 +33,7 @@
                             @endif">
                             {{ ucfirst($order->status) }}
                         </span>
-                        <p class="text-xl font-bold text-primary mt-2">${{ number_format($order->total, 2) }}</p>
+                        <p class="text-xl font-bold text-primary mt-2">{{ number_format($order->total, 2) }} So'm</p>
                     </div>
                 </div>
 

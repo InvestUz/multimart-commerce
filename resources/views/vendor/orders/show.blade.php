@@ -94,8 +94,8 @@
                                         <p class="text-sm text-gray-600">SKU: {{ $item->product->sku ?? 'N/A' }}</p>
                                     </div>
                                     <div class="text-right">
-                                        <p class="font-bold text-gray-900">${{ number_format($item->total, 2) }}</p>
-                                        <p class="text-sm text-gray-600">${{ number_format($item->price, 2) }} × {{ $item->quantity }}</p>
+                                        <p class="font-bold text-gray-900">{{ number_format($item->total, 2) }} So'm</p>
+                                        <p class="text-sm text-gray-600">{{ number_format($item->price, 2) }} So'm × {{ $item->quantity }}</p>
                                     </div>
                                 </div>
                                 
@@ -186,7 +186,7 @@
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">Your Earnings</h2>
                 <div class="text-center">
                     <p class="text-sm text-gray-600 mb-2">Total from Your Items</p>
-                    <p class="text-4xl font-bold text-green-600">${{ number_format($vendorTotal ?? 0, 2) }}</p>
+                    <p class="text-4xl font-bold text-green-600">{{ number_format($vendorTotal ?? 0, 2) }} So'm</p>
                 </div>
             </div>
 

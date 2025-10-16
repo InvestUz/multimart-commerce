@@ -84,7 +84,7 @@
                             </div>
                             <div class="text-right">
                                 <p class="font-semibold text-gray-900">${{ number_format($item->price * $item->quantity, 2) }}</p>
-                                <p class="text-sm text-gray-600">${{ number_format($item->price, 2) }} each</p>
+                                <p class="text-sm text-gray-600">{{ number_format($item->price, 2) }} So'm each</p>
                             </div>
                         </div>
                         @endforeach
@@ -175,7 +175,7 @@
                         @endif
                         <div class="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t">
                             <span>Total:</span>
-                            <span>${{ number_format($order->total, 2) }}</span>
+                            <span>{{ number_format($order->total, 2) }} So'm</span>
                         </div>
                     </div>
                 </div>

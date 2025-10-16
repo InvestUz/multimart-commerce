@@ -54,10 +54,10 @@
                             <div class="flex items-center gap-4 mt-2">
                                 <div class="flex items-center border rounded">
                                     <button onclick="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})" 
-                                            class="px-3 py-1 hover:bg-gray-100">-</button>
-                                    <span class="px-4 py-1 border-x" id="quantity-{{ $item->id }}">{{ $item->quantity }}</span>
+                                            class="px-3 py-1 hover:bg-gray-100 text-lg">−</button>
+                                    <span class="px-4 py-1 border-x min-w-12 text-center" id="quantity-{{ $item->id }}">{{ $item->quantity }}</span>
                                     <button onclick="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})" 
-                                            class="px-3 py-1 hover:bg-gray-100">+</button>
+                                            class="px-3 py-1 hover:bg-gray-100 text-lg">+</button>
                                 </div>
                                 <button onclick="removeFromCart({{ $item->id }})" 
                                         class="text-red-500 hover:text-red-700 text-sm">
@@ -68,8 +68,8 @@
 
                         <!-- Price -->
                         <div class="text-right">
-                            <p class="text-lg font-bold text-primary">${{ number_format($item->price, 2) }}</p>
-                            <p class="text-sm text-gray-600">Subtotal: $<span id="subtotal-{{ $item->id }}">{{ number_format($item->subtotal, 2) }}</span></p>
+                            <p class="text-lg font-bold text-primary">{{ number_format($item->price, 2) }} So'm</p>
+                            <p class="text-sm text-gray-600">Subtotal: <span id="subtotal-{{ $item->id }}">{{ number_format($item->price * $item->quantity, 2) }}</span> So'm</p>
                         </div>
                     </div>
                 </div>
@@ -84,15 +84,15 @@
                     <div class="space-y-3 mb-4">
                         <div class="flex justify-between">
                             <span class="text-gray-600">Subtotal</span>
-                            <span class="font-semibold" id="cart-subtotal">${{ number_format($subtotal, 2) }}</span>
+                            <span class="font-semibold" id="cart-subtotal">{{ number_format($subtotal, 2) }} So'm</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Shipping</span>
-                            <span class="font-semibold">${{ number_format($shipping, 2) }}</span>
+                            <span class="font-semibold">{{ number_format(4.99, 2) }} So'm</span>
                         </div>
                         <div class="border-t pt-3 flex justify-between">
                             <span class="text-lg font-bold">Total</span>
-                            <span class="text-lg font-bold text-primary" id="cart-total">${{ number_format($total, 2) }}</span>
+                            <span class="text-lg font-bold text-primary" id="cart-total">{{ number_format($total, 2) }} So'm</span>
                         </div>
                     </div>
 
@@ -110,6 +110,8 @@
 
 @push('scripts')
 <script>
+const SHIPPING_COST = 4.99;
+
 function updateQuantity(cartId, quantity) {
     if (quantity < 1) {
         removeFromCart(cartId);
@@ -120,19 +122,32 @@ function updateQuantity(cartId, quantity) {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         body: JSON.stringify({ quantity: quantity })
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
+            // Update quantity display
             document.getElementById(`quantity-${cartId}`).textContent = quantity;
+            
+            // Update item subtotal
             document.getElementById(`subtotal-${cartId}`).textContent = data.subtotal.toFixed(2);
-            location.reload();
+            
+            // Update cart totals
+            document.getElementById(`cart-subtotal`).textContent = data.cart_subtotal.toFixed(2) + ' So\'m';
+            document.getElementById(`cart-total`).textContent = data.cart_total.toFixed(2) + ' So\'m';
+            
+            // Update header cart count
+            updateCartCount();
         } else {
-            alert(data.message);
+            alert(data.message || 'Error updating cart');
         }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error updating cart');
     });
 }
 
@@ -142,17 +157,52 @@ function removeFromCart(cartId) {
     fetch(`/cart/${cartId}`, {
         method: 'DELETE',
         headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            document.getElementById(`cart-item-${cartId}`).remove();
-            location.reload();
+            const itemElement = document.getElementById(`cart-item-${cartId}`);
+            if (itemElement) {
+                itemElement.remove();
+            }
+            
+            // Update cart totals
+            document.getElementById(`cart-subtotal`).textContent = data.cart_subtotal.toFixed(2) + ' So\'m';
+            document.getElementById(`cart-total`).textContent = data.cart_total.toFixed(2) + ' So\'m';
+            
+            // Update header cart count
+            updateCartCount();
+            
+            // Reload if cart is now empty
+            if (data.cart_count === 0) {
+                setTimeout(() => location.reload(), 500);
+            }
+        } else {
+            alert(data.message || 'Error removing item');
         }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error removing item');
     });
 }
+
+function updateCartCount() {
+    fetch('{{ route("cart.count") }}')
+        .then(res => res.json())
+        .then(data => {
+            const cartCountElement = document.getElementById('cart-count');
+            if (cartCountElement) {
+                cartCountElement.textContent = data.count;
+            }
+        })
+        .catch(err => console.error('Error updating cart count:', err));
+}
+
+// Update cart count on page load
+document.addEventListener('DOMContentLoaded', updateCartCount);
 </script>
 @endpush
 @endsection

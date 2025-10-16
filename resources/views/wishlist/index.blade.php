@@ -3,130 +3,174 @@
 @section('title', 'My Wishlist')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <h1 class="text-3xl font-bold mb-8">My Wishlist</h1>
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if($wishlists->count() > 0)
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            @foreach($wishlists as $wishlist)
-                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                    <div class="relative">
-                        <a href="{{ route('product.show', $wishlist->product->slug) }}">
-                            @if($wishlist->product->images->first())
-                                <img src="{{ asset('storage/' . $wishlist->product->images->first()->image_path) }}" 
-                                     alt="{{ $wishlist->product->name }}" 
-                                     class="w-full h-64 object-cover">
-                            @else
-                                <div class="w-full h-64 bg-gray-200 flex items-center justify-center">
-                                    <span class="text-gray-400">No image</span>
-                                </div>
-                            @endif
-                        </a>
-                        
-                        <!-- Remove from Wishlist Button -->
-                        <form action="{{ route('wishlist.destroy', $wishlist) }}" method="POST" class="absolute top-2 right-2">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="bg-white rounded-full p-2 shadow-md hover:bg-red-50 transition">
-                                <svg class="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
-                                </svg>
-                            </button>
-                        </form>
-
-                        <!-- Stock Badge -->
-                        @if($wishlist->product->stock < 1)
-                            <div class="absolute top-2 left-2">
-                                <span class="bg-red-500 text-white text-xs px-2 py-1 rounded">Out of Stock</span>
-                            </div>
-                        @elseif($wishlist->product->stock < 10)
-                            <div class="absolute top-2 left-2">
-                                <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded">Low Stock</span>
-                            </div>
-                        @endif
-                    </div>
-
-                    <div class="p-4">
-                        <a href="{{ route('product.show', $wishlist->product->slug) }}" class="block">
-                            <h3 class="text-lg font-semibold text-gray-900 hover:text-blue-600 mb-2">
-                                {{ Str::limit($wishlist->product->name, 50) }}
-                            </h3>
-                        </a>
-
-                        <p class="text-sm text-gray-600 mb-2">{{ $wishlist->product->vendor->shop_name ?? $wishlist->product->vendor->name }}</p>
-
-                        <!-- Rating -->
-                        @if($wishlist->product->reviews_count > 0)
-                            <div class="flex items-center mb-3">
-                                <div class="flex">
-                                    @for($i = 1; $i <= 5; $i++)
-                                        <svg class="w-4 h-4 {{ $i <= round($wishlist->product->reviews_avg_rating) ? 'text-yellow-400' : 'text-gray-300' }}" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                                        </svg>
-                                    @endfor
-                                </div>
-                                <span class="text-sm text-gray-600 ml-2">({{ $wishlist->product->reviews_count }})</span>
-                            </div>
-                        @endif
-
-                        <!-- Price -->
-                        <div class="mb-4">
-                            <div class="flex items-center">
-                                <span class="text-2xl font-bold text-gray-900">${{ number_format($wishlist->product->price, 2) }}</span>
-                                @if($wishlist->product->compare_price && $wishlist->product->compare_price > $wishlist->product->price)
-                                    <span class="text-sm text-gray-500 line-through ml-2">${{ number_format($wishlist->product->compare_price, 2) }}</span>
-                                @endif
-                            </div>
-                            @if($wishlist->product->compare_price && $wishlist->product->compare_price > $wishlist->product->price)
-                                <span class="text-sm text-green-600 font-semibold">
-                                    Save {{ round((($wishlist->product->compare_price - $wishlist->product->price) / $wishlist->product->compare_price) * 100) }}%
-                                </span>
-                            @endif
-                        </div>
-
-                        <!-- Add to Cart Button -->
-                        @if($wishlist->product->stock > 0 && $wishlist->product->is_active)
-                            <form action="{{ route('cart.store') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="product_id" value="{{ $wishlist->product->id }}">
-                                <input type="hidden" name="quantity" value="1">
-                                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">
-                                    Add to Cart
-                                </button>
-                            </form>
-                        @else
-                            <button disabled class="w-full bg-gray-300 text-gray-500 font-semibold py-2 px-4 rounded-lg cursor-not-allowed">
-                                Out of Stock
-                            </button>
-                        @endif
-
-                        <p class="text-xs text-gray-500 mt-2">Added {{ $wishlist->created_at->diffForHumans() }}</p>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        <!-- Pagination -->
-        <div class="mt-8">
-            {{ $wishlists->links() }}
-        </div>
-    @else
-        <div class="bg-white rounded-lg shadow-md p-12 text-center">
-            <svg class="w-24 h-24 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-            </svg>
-            <h2 class="text-2xl font-semibold text-gray-900 mb-2">Your wishlist is empty</h2>
-            <p class="text-gray-600 mb-6">Start adding products you love to your wishlist!</p>
-            <a href="{{ route('dashboard') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition">
+    @if($wishlists->isEmpty())
+        <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+            <i class="fas fa-heart text-6xl text-gray-300 mb-4"></i>
+            <h2 class="text-2xl font-semibold mb-2">Your wishlist is empty</h2>
+            <p class="text-gray-600 mb-6">Start adding products to your wishlist!</p>
+            <a href="{{ route('dashboard') }}" class="bg-primary text-white px-6 py-3 rounded-lg inline-block hover:bg-green-600">
                 Continue Shopping
             </a>
         </div>
+    @else
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            @foreach($wishlists as $wishlist)
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow" id="wishlist-item-{{ $wishlist->id }}">
+                <!-- Product Image -->
+                <div class="relative w-full h-48 bg-gray-200 overflow-hidden group">
+                    @if($wishlist->product->primaryImage)
+                        <img src="{{ asset('storage/' . $wishlist->product->primaryImage->image_path) }}" 
+                             alt="{{ $wishlist->product->name }}" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform">
+                    @else
+                        <div class="w-full h-full flex items-center justify-center">
+                            <i class="fas fa-image text-gray-400 text-4xl"></i>
+                        </div>
+                    @endif
+
+                    <!-- Wishlist Remove Button -->
+                    <button onclick="removeFromWishlist({{ $wishlist->id }})" 
+                            class="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                            title="Remove from wishlist">
+                        <i class="fas fa-heart"></i>
+                    </button>
+
+                    <!-- Category Badge -->
+                    @if($wishlist->product->category)
+                        <span class="absolute top-2 left-2 bg-primary text-white px-3 py-1 rounded-full text-sm">
+                            {{ $wishlist->product->category->name }}
+                        </span>
+                    @endif
+                </div>
+
+                <!-- Product Details -->
+                <div class="p-4">
+                    <a href="{{ route('product.show', $wishlist->product->slug) }}" 
+                       class="text-lg font-semibold text-gray-800 hover:text-primary line-clamp-2">
+                        {{ $wishlist->product->name }}
+                    </a>
+
+                    <p class="text-sm text-gray-600 mt-1">
+                        by {{ $wishlist->product->user->store_name ?? $wishlist->product->user->name }}
+                    </p>
+
+                    <div class="flex items-center justify-between mt-3">
+                        <div>
+                            @if($wishlist->product->discount_price)
+                                <p class="text-lg font-bold text-primary">{{ number_format($wishlist->product->discount_price, 2) }} So'm</p>
+                                <p class="text-sm text-gray-400 line-through">{{ number_format($wishlist->product->price, 2) }} So'm</p>
+                            @else
+                                <p class="text-lg font-bold text-primary">{{ number_format($wishlist->product->price, 2) }} So'm</p>
+                            @endif
+                        </div>
+                        <div class="text-yellow-400">
+                            @for($i = 0; $i < 5; $i++)
+                                @if($i < floor($wishlist->product->average_rating ?? 0))
+                                    <i class="fas fa-star"></i>
+                                @else
+                                    <i class="far fa-star"></i>
+                                @endif
+                            @endfor
+                        </div>
+                    </div>
+
+                    <!-- Add to Cart Button -->
+                    <form action="{{ route('cart.store') }}" method="POST" class="mt-4" id="cart-form-{{ $wishlist->product->id }}">
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $wishlist->product->id }}">
+                        <input type="hidden" name="quantity" value="1">
+                        
+                        <button type="submit" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-green-600 transition-colors font-semibold">
+                            <i class="fas fa-shopping-cart mr-2"></i> Add to Cart
+                        </button>
+                    </form>
+
+                    <!-- View Details Link -->
+                    <a href="{{ route('product.show', $wishlist->product->slug) }}" 
+                       class="w-full block text-center border border-gray-300 text-gray-700 py-2 rounded-lg mt-2 hover:bg-gray-50 transition-colors">
+                        View Details
+                    </a>
+                </div>
+            </div>
+            @endforeach
+        </div>
     @endif
 </div>
+
+@push('scripts')
+<script>
+function removeFromWishlist(wishlistId) {
+    if (!confirm('Remove this item from wishlist?')) return;
+
+    fetch(`/wishlist/${wishlistId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const itemElement = document.getElementById(`wishlist-item-${wishlistId}`);
+            if (itemElement) {
+                itemElement.remove();
+            }
+            
+            // Update header wishlist count
+            updateWishlistCount();
+            
+            // Show success message
+            showNotification(data.message, 'success');
+            
+            // Reload if wishlist is now empty
+            setTimeout(() => {
+                if (document.querySelectorAll('[id^="wishlist-item-"]').length === 0) {
+                    location.reload();
+                }
+            }, 500);
+        } else {
+            showNotification(data.message || 'Error removing item', 'error');
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        showNotification('Error removing item', 'error');
+    });
+}
+
+function updateWishlistCount() {
+    fetch('{{ route("wishlist.count") }}')
+        .then(res => res.json())
+        .then(data => {
+            const wishlistCountElement = document.getElementById('wishlist-count');
+            if (wishlistCountElement) {
+                wishlistCountElement.textContent = data.count || '0';
+            }
+        })
+        .catch(err => console.error('Error updating wishlist count:', err));
+}
+
+function showNotification(message, type) {
+    const alertClass = type === 'success' 
+        ? 'bg-green-100 border-green-400 text-green-700' 
+        : 'bg-red-100 border-red-400 text-red-700';
+    
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 ${alertClass} border px-4 py-3 rounded z-50`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.remove(), 3000);
+}
+
+// Update wishlist count on page load
+document.addEventListener('DOMContentLoaded', updateWishlistCount);
+</script>
+@endpush
 @endsection

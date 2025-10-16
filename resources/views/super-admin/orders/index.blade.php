@@ -67,7 +67,7 @@
                             <div class="text-sm text-gray-500">{{ $order->user->email }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-semibold text-gray-900">${{ number_format($order->total, 2) }}</div>
+                            <div class="text-sm font-semibold text-gray-900">{{ number_format($order->total, 2) }} So'm</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 

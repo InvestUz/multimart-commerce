@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
 use App\Models\Wishlist;
@@ -30,40 +29,58 @@ class WishlistController extends Controller
             'product_id' => 'required|exists:products,id',
         ]);
 
-        $wishlist = Wishlist::where('user_id', auth()->id())
-            ->where('product_id', $request->product_id)
+        $userId = auth()->id();
+        $productId = $request->product_id;
+
+        $wishlist = Wishlist::where('user_id', $userId)
+            ->where('product_id', $productId)
             ->first();
 
         if ($wishlist) {
-            // Remove from wishlist
             $wishlist->delete();
-            $inWishlist = false;
-            $message = 'Removed from wishlist';
         } else {
-            // Add to wishlist
             Wishlist::create([
-                'user_id' => auth()->id(),
-                'product_id' => $request->product_id,
+                'user_id' => $userId,
+                'product_id' => $productId,
             ]);
-            $inWishlist = true;
-            $message = 'Added to wishlist';
         }
 
-         return redirect()->back()->with([
-            'success' => true,
-            'in_wishlist' => $inWishlist,
-            'message' => $message
-        ]);
+        // Check if it's AJAX request
+        if ($request->ajax() || $request->wantsJson()) {
+            $wishlistCount = Wishlist::where('user_id', $userId)->count();
+            return ['wishlist_count' => $wishlistCount];
+        }
+
+        return redirect()->back();
     }
 
-    public function destroy(Wishlist $wishlist)
+    public function destroy(Wishlist $wishlist, Request $request)
     {
-        if ($wishlist->user_id !== auth()->id()) {
+        $userId = auth()->id();
+
+        if ($wishlist->user_id !== $userId) {
             abort(403);
         }
 
         $wishlist->delete();
 
-        return redirect()->back()->with('success', 'Item removed from wishlist!');
+        // Check if it's AJAX request
+        if ($request->ajax() || $request->wantsJson()) {
+            $wishlistCount = Wishlist::where('user_id', $userId)->count();
+            return ['wishlist_count' => $wishlistCount];
+        }
+
+        return redirect()->back();
+    }
+
+    public function count()
+    {
+        $count = 0;
+
+        if (auth()->check()) {
+            $count = Wishlist::where('user_id', auth()->id())->count();
+        }
+
+        return ['count' => $count];
     }
 }

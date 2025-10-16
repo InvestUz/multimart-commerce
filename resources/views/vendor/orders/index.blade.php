@@ -89,8 +89,8 @@
                     </div>
 
                     <div class="text-right">
-                        <p class="text-lg font-bold text-primary">${{ number_format($item->total, 2) }}</p>
-                        <p class="text-sm text-gray-600">${{ number_format($item->price, 2) }} each</p>
+                        <p class="text-lg font-bold text-primary">{{ number_format($item->total, 2) }} So'm</p>
+                        <p class="text-sm text-gray-600">{{ number_format($item->price, 2) }} So'm each</p>
                     </div>
                 </div>
 
