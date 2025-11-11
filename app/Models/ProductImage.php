@@ -17,30 +17,59 @@ class ProductImage extends Model
     ];
 
     protected $casts = [
-        'is_primary' => 'boolean',
         'order' => 'integer',
+        'is_primary' => 'boolean',
     ];
+
+    // ============================================
+    // Relationships
+    // ============================================
 
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function getImageUrlAttribute()
+    // ============================================
+    // Scopes
+    // ============================================
+
+    public function scopePrimary($query)
+    {
+        return $query->where('is_primary', true);
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('order');
+    }
+
+    // ============================================
+    // Accessors
+    // ============================================
+
+    public function getImageUrlAttribute(): string
     {
         return asset('storage/' . $this->image_path);
     }
 
-    // Set as primary and unset others
-    public function setAsPrimary()
+    public function getThumbnailUrlAttribute(): string
     {
-        // Unset all primary images for this product
-        ProductImage::where('product_id', $this->product_id)
-            ->where('id', '!=', $this->id)
-            ->update(['is_primary' => false]);
+        // Assuming you have thumbnail generation logic
+        $path = str_replace('products/', 'products/thumbnails/', $this->image_path);
+        return asset('storage/' . $path);
+    }
 
-        // Set this as primary
-        $this->is_primary = true;
-        $this->save();
+    // ============================================
+    // Business Logic Methods
+    // ============================================
+
+    public function makePrimary(): void
+    {
+        // Remove primary from all other images
+        $this->product->images()->update(['is_primary' => false]);
+
+        // Make this image primary
+        $this->update(['is_primary' => true]);
     }
 }

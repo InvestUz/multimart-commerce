@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,10 +9,7 @@ class Wishlist extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'user_id',
-        'product_id',
-    ];
+    protected $fillable = ['user_id', 'product_id'];
 
     public function user()
     {
@@ -23,5 +19,10 @@ class Wishlist extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function scopeByUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
     }
 }

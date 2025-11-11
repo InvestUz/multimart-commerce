@@ -2,22 +2,20 @@
 
 namespace App\Models;
 
-use App\Traits\HasRatings;
-use App\Traits\Sluggable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
-
 class Product extends Model
 {
-    use HasFactory, SoftDeletes, HasRatings, Sluggable;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'user_id',
         'category_id',
-        'sub_category_id',  // Add this line
+        'sub_category_id',
+        'brand_id',
         'name',
         'slug',
         'description',
@@ -45,19 +43,25 @@ class Product extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'old_price' => 'decimal:2',
-        'weight' => 'decimal:2',
-        'is_active' => 'boolean',
-        'is_featured' => 'boolean',
+        'discount_percentage' => 'integer',
+        'stock' => 'integer',
         'sizes' => 'array',
         'colors' => 'array',
         'specifications' => 'array',
+        'weight' => 'decimal:2',
+        'is_active' => 'boolean',
+        'is_featured' => 'boolean',
         'average_rating' => 'decimal:2',
-        'discount_percentage' => 'integer',
-        'stock' => 'integer',
-        'views' => 'integer',
         'total_reviews' => 'integer',
+        'views' => 'integer',
         'total_sales' => 'integer',
     ];
+
+    protected $appends = ['discount_amount', 'is_in_stock'];
+
+    // ============================================
+    // Boot Method
+    // ============================================
 
     protected static function boot()
     {
@@ -68,30 +72,21 @@ class Product extends Model
                 $product->slug = Str::slug($product->name);
             }
             if (empty($product->sku)) {
-                $product->sku = 'SKU-' . strtoupper(Str::random(10));
+                $product->sku = 'PRD-' . strtoupper(Str::random(8));
             }
         });
 
         static::updating(function ($product) {
-            if ($product->isDirty('name') && !$product->isDirty('slug')) {
+            if ($product->isDirty('name') && empty($product->slug)) {
                 $product->slug = Str::slug($product->name);
             }
         });
     }
 
-    // Add this relationship:
-    public function subCategory()
-    {
-        return $this->belongsTo(SubCategory::class);
-    }
-
-    // Add this scope:
-    public function scopeBySubCategory($query, $subCategoryId)
-    {
-        return $query->where('sub_category_id', $subCategoryId);
-    }
-
+    // ============================================
     // Relationships
+    // ============================================
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -107,6 +102,16 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function subCategory()
+    {
+        return $this->belongsTo(SubCategory::class);
+    }
+
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
     public function images()
     {
         return $this->hasMany(ProductImage::class)->orderBy('order');
@@ -115,6 +120,16 @@ class Product extends Model
     public function primaryImage()
     {
         return $this->hasOne(ProductImage::class)->where('is_primary', true);
+    }
+
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    public function activeVariants()
+    {
+        return $this->hasMany(ProductVariant::class)->where('is_active', true);
     }
 
     public function reviews()
@@ -127,14 +142,14 @@ class Product extends Model
         return $this->hasMany(Review::class)->where('is_approved', true);
     }
 
-    public function carts()
-    {
-        return $this->hasMany(Cart::class);
-    }
-
     public function wishlists()
     {
         return $this->hasMany(Wishlist::class);
+    }
+
+    public function carts()
+    {
+        return $this->hasMany(Cart::class);
     }
 
     public function orderItems()
@@ -147,7 +162,27 @@ class Product extends Model
         return $this->hasMany(ProductView::class);
     }
 
+    public function flashSales()
+    {
+        return $this->belongsToMany(FlashSale::class, 'flash_sale_products')
+            ->withPivot(['flash_price', 'discount_percentage', 'quantity_limit', 'quantity_sold', 'per_user_limit'])
+            ->withTimestamps();
+    }
+
+    public function activeFlashSale()
+    {
+        return $this->belongsToMany(FlashSale::class, 'flash_sale_products')
+            ->where('is_active', true)
+            ->where('starts_at', '<=', now())
+            ->where('ends_at', '>=', now())
+            ->withPivot(['flash_price', 'discount_percentage', 'quantity_limit', 'quantity_sold', 'per_user_limit'])
+            ->first();
+    }
+
+    // ============================================
     // Scopes
+    // ============================================
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -163,83 +198,189 @@ class Product extends Model
         return $query->where('stock', '>', 0);
     }
 
-    public function scopeByVendor($query, $vendorId)
-    {
-        return $query->where('user_id', $vendorId);
-    }
-
     public function scopeByCategory($query, $categoryId)
     {
         return $query->where('category_id', $categoryId);
     }
 
-    public function scopeSearch($query, $term)
+    public function scopeBySubCategory($query, $subCategoryId)
     {
-        return $query->where(function ($q) use ($term) {
-            $q->where('name', 'like', "%{$term}%")
-                ->orWhere('description', 'like', "%{$term}%")
-                ->orWhere('sku', 'like', "%{$term}%")
-                ->orWhere('brand', 'like', "%{$term}%");
+        return $query->where('sub_category_id', $subCategoryId);
+    }
+
+    public function scopeByBrand($query, $brandId)
+    {
+        return $query->where('brand_id', $brandId);
+    }
+
+    public function scopeByVendor($query, $vendorId)
+    {
+        return $query->where('user_id', $vendorId);
+    }
+
+    public function scopePriceRange($query, $min, $max)
+    {
+        return $query->whereBetween('price', [$min, $max]);
+    }
+
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('description', 'like', "%{$search}%")
+              ->orWhere('sku', 'like', "%{$search}%");
         });
     }
 
-    // Helper methods
-    public function hasDiscount()
+    public function scopePopular($query)
     {
-        return $this->old_price && $this->old_price > $this->price;
+        return $query->orderBy('total_sales', 'desc');
     }
 
-    public function calculateDiscount()
+    public function scopeTrending($query)
     {
-        if ($this->hasDiscount()) {
-            return round((($this->old_price - $this->price) / $this->old_price) * 100);
+        return $query->orderBy('views', 'desc');
+    }
+
+    public function scopeTopRated($query)
+    {
+        return $query->where('total_reviews', '>', 0)
+                     ->orderBy('average_rating', 'desc');
+    }
+
+    public function scopeLatest($query)
+    {
+        return $query->orderBy('created_at', 'desc');
+    }
+
+    public function scopeOnSale($query)
+    {
+        return $query->where('discount_percentage', '>', 0);
+    }
+
+    // ============================================
+    // Accessors
+    // ============================================
+
+    public function getDiscountAmountAttribute()
+    {
+        if ($this->old_price && $this->old_price > $this->price) {
+            return $this->old_price - $this->price;
         }
         return 0;
     }
 
-    public function updateRating()
-    {
-        $reviews = $this->reviews()->where('is_approved', true);
-        $this->average_rating = $reviews->avg('rating') ?? 0;
-        $this->total_reviews = $reviews->count();
-        $this->save();
-    }
-
-    public function incrementViews()
-    {
-        $this->increment('views');
-    }
-
-    public function isInStock()
+    public function getIsInStockAttribute(): bool
     {
         return $this->stock > 0;
     }
 
-    public function canBePurchased($quantity = 1)
+    public function getUrlAttribute(): string
     {
-        return $this->is_active && $this->stock >= $quantity;
+        return route('products.show', $this->slug);
     }
 
-    // Accessors
-    public function getPrimaryImageUrlAttribute()
+    public function getPrimaryImageUrlAttribute(): ?string
     {
-        if ($this->primaryImage) {
-            return asset('storage/' . $this->primaryImage->image_path);
+        $primaryImage = $this->primaryImage;
+        if ($primaryImage) {
+            return asset('storage/' . $primaryImage->image_path);
         }
-        return asset('images/no-image.png');
+
+        $firstImage = $this->images()->first();
+        return $firstImage ? asset('storage/' . $firstImage->image_path) : null;
     }
 
-    public function getFormattedPriceAttribute()
+    public function getFormattedPriceAttribute(): string
     {
         return '$' . number_format($this->price, 2);
     }
 
-    public function getFormattedOldPriceAttribute()
+    public function getFormattedOldPriceAttribute(): ?string
     {
         return $this->old_price ? '$' . number_format($this->old_price, 2) : null;
     }
 
-    public function getStockStatusAttribute()
+    public function getRatingStarsAttribute(): string
+    {
+        $fullStars = floor($this->average_rating);
+        $halfStar = ($this->average_rating - $fullStars) >= 0.5 ? 1 : 0;
+        $emptyStars = 5 - $fullStars - $halfStar;
+
+        return str_repeat('★', $fullStars) .
+               str_repeat('☆', $halfStar) .
+               str_repeat('☆', $emptyStars);
+    }
+
+    // ============================================
+    // Business Logic Methods
+    // ============================================
+
+    public function incrementViews(?User $user = null, ?string $ipAddress = null): void
+    {
+        $this->increment('views');
+
+        ProductView::create([
+            'product_id' => $this->id,
+            'user_id' => $user?->id,
+            'ip_address' => $ipAddress,
+            'user_agent' => request()->userAgent(),
+            'viewed_at' => now(),
+        ]);
+    }
+
+    public function updateRating(): void
+    {
+        $averageRating = $this->approvedReviews()->avg('rating');
+        $totalReviews = $this->approvedReviews()->count();
+
+        $this->update([
+            'average_rating' => $averageRating ?? 0,
+            'total_reviews' => $totalReviews,
+        ]);
+    }
+
+    public function decrementStock(int $quantity): bool
+    {
+        if ($this->stock >= $quantity) {
+            $this->decrement('stock', $quantity);
+            return true;
+        }
+        return false;
+    }
+
+    public function incrementStock(int $quantity): void
+    {
+        $this->increment('stock', $quantity);
+    }
+
+    public function incrementSales(int $quantity = 1): void
+    {
+        $this->increment('total_sales', $quantity);
+    }
+
+    public function hasDiscount(): bool
+    {
+        return $this->discount_percentage > 0 || ($this->old_price && $this->old_price > $this->price);
+    }
+
+    public function isInWishlist(?User $user = null): bool
+    {
+        if (!$user) {
+            return false;
+        }
+        return $this->wishlists()->where('user_id', $user->id)->exists();
+    }
+
+    public function isInCart(?User $user = null): bool
+    {
+        if (!$user) {
+            return false;
+        }
+        return $this->carts()->where('user_id', $user->id)->exists();
+    }
+
+    public function getStockStatusAttribute(): string
     {
         if ($this->stock > 10) {
             return 'In Stock';
@@ -249,13 +390,24 @@ class Product extends Model
         return 'Out of Stock';
     }
 
-    public function getStockStatusColorAttribute()
+    public function hasVariants(): bool
     {
-        if ($this->stock > 10) {
-            return 'green';
-        } elseif ($this->stock > 0) {
-            return 'orange';
-        }
-        return 'red';
+        return $this->variants()->exists();
+    }
+
+    public function isOnFlashSale(): bool
+    {
+        return $this->activeFlashSale() !== null;
+    }
+
+    public function getFlashSalePrice(): ?float
+    {
+        $flashSale = $this->activeFlashSale();
+        return $flashSale ? $flashSale->pivot->flash_price : null;
+    }
+
+    public function getEffectivePrice(): float
+    {
+        return $this->getFlashSalePrice() ?? $this->price;
     }
 }

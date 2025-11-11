@@ -1,8 +1,4 @@
 <?php
-// ============================================
-// SubCategory Model
-// File: app/Models/SubCategory.php
-// ============================================
 
 namespace App\Models;
 
@@ -29,25 +25,31 @@ class SubCategory extends Model
         'order' => 'integer',
     ];
 
-    // Automatically generate slug
+    // ============================================
+    // Boot Method
+    // ============================================
+
     protected static function boot()
     {
         parent::boot();
 
-        static::creating(function ($subcategory) {
-            if (empty($subcategory->slug)) {
-                $subcategory->slug = Str::slug($subcategory->name);
+        static::creating(function ($subCategory) {
+            if (empty($subCategory->slug)) {
+                $subCategory->slug = Str::slug($subCategory->name);
             }
         });
 
-        static::updating(function ($subcategory) {
-            if ($subcategory->isDirty('name') && !$subcategory->isDirty('slug')) {
-                $subcategory->slug = Str::slug($subcategory->name);
+        static::updating(function ($subCategory) {
+            if ($subCategory->isDirty('name') && empty($subCategory->slug)) {
+                $subCategory->slug = Str::slug($subCategory->name);
             }
         });
     }
 
+    // ============================================
     // Relationships
+    // ============================================
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -58,10 +60,23 @@ class SubCategory extends Model
         return $this->hasMany(Product::class);
     }
 
+    public function activeProducts()
+    {
+        return $this->hasMany(Product::class)->where('is_active', true);
+    }
+
+    // ============================================
     // Scopes
+    // ============================================
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('order')->orderBy('name');
     }
 
     public function scopeByCategory($query, $categoryId)
@@ -69,14 +84,31 @@ class SubCategory extends Model
         return $query->where('category_id', $categoryId);
     }
 
-    public function scopeOrdered($query)
+    // ============================================
+    // Accessors
+    // ============================================
+
+    public function getIconUrlAttribute(): ?string
     {
-        return $query->orderBy('order');
+        return $this->icon ? asset('storage/' . $this->icon) : null;
     }
 
-    // Accessors
+    public function getUrlAttribute(): string
+    {
+        return route('subcategories.show', ['category' => $this->category->slug, 'subcategory' => $this->slug]);
+    }
+
+    // ============================================
+    // Business Logic Methods
+    // ============================================
+
     public function getProductsCountAttribute()
     {
-        return $this->products()->active()->count();
+        return $this->products()->count();
+    }
+
+    public function getActiveProductsCountAttribute()
+    {
+        return $this->activeProducts()->count();
     }
 }

@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,17 +11,9 @@ class ProductView extends Model
 
     public $timestamps = false;
 
-    protected $fillable = [
-        'product_id',
-        'user_id',
-        'ip_address',
-        'user_agent',
-        'viewed_at',
-    ];
+    protected $fillable = ['product_id', 'user_id', 'ip_address', 'user_agent', 'viewed_at'];
 
-    protected $casts = [
-        'viewed_at' => 'datetime',
-    ];
+    protected $casts = ['viewed_at' => 'datetime'];
 
     public function product()
     {
@@ -32,5 +23,15 @@ class ProductView extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function scopeRecent($query, $days = 30)
+    {
+        return $query->where('viewed_at', '>=', now()->subDays($days));
+    }
+
+    public function scopeByProduct($query, $productId)
+    {
+        return $query->where('product_id', $productId);
     }
 }
