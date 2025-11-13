@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
@@ -8,360 +7,292 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\Category;
 use App\Models\SubCategory;
+use App\Models\Brand;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::where('user_id', auth()->id())
-            ->with(['category', 'primaryImage']);
+        $query = auth()->user()->products()
+            ->with(['category', 'brand', 'images'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews');
 
-        // Filter by category
-        if ($request->filled('category')) {
-            $query->where('category_id', $request->category);
-        }
-
-        // Filter by status
-        if ($request->filled('status')) {
-            if ($request->status === 'active') {
-                $query->where('is_active', true);
-            } elseif ($request->status === 'inactive') {
-                $query->where('is_active', false);
-            }
-        }
-
-        // Filter by stock
-        if ($request->filled('stock')) {
-            if ($request->stock === 'in_stock') {
-                $query->where('stock', '>', 0);
-            } elseif ($request->stock === 'out_of_stock') {
-                $query->where('stock', 0);
-            } elseif ($request->stock === 'low_stock') {
-                $query->where('stock', '>', 0)->where('stock', '<=', 10);
-            }
-        }
-
-        // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%")
-                    ->orWhere('brand', 'like', "%{$search}%");
+                  ->orWhere('sku', 'like', "%{$search}%");
             });
         }
 
-        // Sort
-        $sortBy = $request->input('sort_by', 'latest');
-        switch ($sortBy) {
-            case 'name_asc':
-                $query->orderBy('name', 'asc');
-                break;
-            case 'name_desc':
-                $query->orderBy('name', 'desc');
-                break;
-            case 'price_asc':
-                $query->orderBy('price', 'asc');
-                break;
-            case 'price_desc':
-                $query->orderBy('price', 'desc');
-                break;
-            case 'stock_asc':
-                $query->orderBy('stock', 'asc');
-                break;
-            case 'stock_desc':
-                $query->orderBy('stock', 'desc');
-                break;
-            default:
-                $query->latest();
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
         }
 
-        $products = $query->paginate(15)->withQueryString();
-        $categories = Category::active()->orderBy('name')->get();
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
 
-        return view('vendor.products.index', compact('products', 'categories'));
+        $products = $query->latest()->paginate(20);
+
+        return view('vendor.products.index', compact('products'));
     }
 
     public function create()
     {
-        $categories = Category::active()->orderBy('name')->get();
-        return view('vendor.products.create', compact('categories'));
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
+        $brands = Brand::where('is_active', true)->orderBy('name')->get();
+
+        return view('vendor.products.create', compact('categories', 'brands'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'sub_category_id' => 'required|exists:sub_categories,id',
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'slug' => 'nullable|string|max:255|unique:products,slug',
+            'sku' => 'required|string|max:100|unique:products,sku',
+            'category_id' => 'required|exists:categories,id',
+            'sub_category_id' => 'nullable|exists:sub_categories,id',
+            'brand_id' => 'nullable|exists:brands,id',
+            'description' => 'required|string',
+            'short_description' => 'nullable|string|max:500',
             'price' => 'required|numeric|min:0',
-            'old_price' => 'nullable|numeric|min:0|gte:price',
+            'compare_price' => 'nullable|numeric|min:0',
+            'cost_price' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'brand' => 'nullable|string|max:100',
-            'model' => 'nullable|string|max:100',
-            'condition' => 'nullable|in:new,used,refurbished',
             'weight' => 'nullable|numeric|min:0',
             'dimensions' => 'nullable|string|max:100',
-            'sizes' => 'nullable|array',
-            'sizes.*' => 'string|max:50',
-            'colors' => 'nullable|array',
-            'colors.*' => 'string|max:50',
-            'images' => 'required|array|min:1|max:10',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'is_active' => 'boolean',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'tags' => 'nullable|string',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
+            'meta_keywords' => 'nullable|string|max:255',
         ]);
 
-        $discountPercentage = 0;
-        if ($request->old_price && $request->old_price > $request->price) {
-            $discountPercentage = round((($request->old_price - $request->price) / $request->old_price) * 100);
+        if (!$request->filled('slug')) {
+            $validated['slug'] = Str::slug($validated['name']);
         }
 
-        $sizes = $request->sizes ? array_filter($request->sizes, function ($value) {
-            return !empty(trim($value));
-        }) : null;
+        $validated['vendor_id'] = auth()->id();
 
-        $colors = $request->colors ? array_filter($request->colors, function ($value) {
-            return !empty(trim($value));
-        }) : null;
+        DB::beginTransaction();
+        try {
+            $product = Product::create($validated);
 
-        $product = Product::create([
-            'user_id' => auth()->id(),
-            'category_id' => $request->category_id,
-            'sub_category_id' => $request->sub_category_id,
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'description' => $request->description,
-            'price' => $request->price,
-            'old_price' => $request->old_price,
-            'discount_percentage' => $discountPercentage,
-            'stock' => $request->stock,
-            'brand' => $request->brand,
-            'model' => $request->model,
-            'condition' => $request->condition ?? 'new',
-            'weight' => $request->weight,
-            'dimensions' => $request->dimensions,
-            'sizes' => $sizes ? array_values($sizes) : null,
-            'colors' => $colors ? array_values($colors) : null,
-            'is_active' => true,
-        ]);
+            // Handle images
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $index => $image) {
+                    $path = $image->store('products', 'public');
 
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $index => $image) {
-                $path = $image->store('products', 'public');
-
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'image_path' => $path,
-                    'order' => $index + 1,
-                    'is_primary' => $index === 0,
-                ]);
+                    ProductImage::create([
+                        'product_id' => $product->id,
+                        'image_path' => $path,
+                        'order' => $index,
+                        'is_primary' => $index === 0,
+                    ]);
+                }
             }
+
+            DB::commit();
+
+            return redirect()->route('vendor.products.index')
+                ->with('success', 'Product created successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()
+                ->with('error', 'Failed to create product. Please try again.');
         }
-
-        return redirect()->route('vendor.products.index')
-            ->with('success', 'Product created successfully!');
     }
-
 
     public function show(Product $product)
     {
-        // Check ownership
-        if ($product->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
-        }
+        $this->authorize('view', $product);
 
-        $product->load(['images', 'category', 'reviews.user', 'orderItems.order']);
+        $product->load([
+            'category',
+            'subCategory',
+            'brand',
+            'images',
+            'variants',
+            'reviews.user'
+        ]);
 
-        $totalSold = $product->orderItems()
-            ->whereHas('order', function ($q) {
-                $q->whereIn('status', ['delivered', 'shipped']);
-            })
-            ->sum('quantity');
-
-        $totalRevenue = $product->orderItems()
-            ->whereHas('order', function ($q) {
-                $q->where('status', 'delivered');
-            })
-            ->sum('total');
-
-        $recentOrders = $product->orderItems()
-            ->with('order')
-            ->latest()
-            ->take(10)
-            ->get();
-
-        return view('vendor.products.show', compact('product', 'totalSold', 'totalRevenue', 'recentOrders'));
+        return view('vendor.products.show', compact('product'));
     }
 
     public function edit(Product $product)
     {
-        if ($product->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
-        }
+        $this->authorize('update', $product);
 
-        $categories = Category::active()->orderBy('name')->get();
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
+        $brands = Brand::where('is_active', true)->orderBy('name')->get();
         $subCategories = SubCategory::where('category_id', $product->category_id)
             ->where('is_active', true)
-            ->orderBy('order')
+            ->orderBy('name')
             ->get();
 
-        $product->load('images');
-
-        return view('vendor.products.edit', compact('product', 'categories', 'subCategories'));
+        return view('vendor.products.edit', compact('product', 'categories', 'brands', 'subCategories'));
     }
 
     public function update(Request $request, Product $product)
     {
-        if ($product->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
-        }
+        $this->authorize('update', $product);
 
-        $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'sub_category_id' => 'required|exists:sub_categories,id',
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'slug' => 'nullable|string|max:255|unique:products,slug,' . $product->id,
+            'sku' => 'required|string|max:100|unique:products,sku,' . $product->id,
+            'category_id' => 'required|exists:categories,id',
+            'sub_category_id' => 'nullable|exists:sub_categories,id',
+            'brand_id' => 'nullable|exists:brands,id',
+            'description' => 'required|string',
+            'short_description' => 'nullable|string|max:500',
             'price' => 'required|numeric|min:0',
-            'old_price' => 'nullable|numeric|min:0|gte:price',
+            'compare_price' => 'nullable|numeric|min:0',
+            'cost_price' => 'nullable|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'brand' => 'nullable|string|max:100',
-            'model' => 'nullable|string|max:100',
-            'condition' => 'nullable|in:new,used,refurbished',
             'weight' => 'nullable|numeric|min:0',
             'dimensions' => 'nullable|string|max:100',
-            'sizes' => 'nullable|array',
-            'sizes.*' => 'string|max:50',
-            'colors' => 'nullable|array',
-            'colors.*' => 'string|max:50',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'is_active' => 'boolean',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'tags' => 'nullable|string',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
+            'meta_keywords' => 'nullable|string|max:255',
         ]);
 
-        $discountPercentage = 0;
-        if ($request->old_price && $request->old_price > $request->price) {
-            $discountPercentage = round((($request->old_price - $request->price) / $request->old_price) * 100);
+        if (!$request->filled('slug')) {
+            $validated['slug'] = Str::slug($validated['name']);
         }
 
-        $sizes = $request->sizes ? array_filter($request->sizes, function ($value) {
-            return !empty(trim($value));
-        }) : null;
+        DB::beginTransaction();
+        try {
+            $product->update($validated);
 
-        $colors = $request->colors ? array_filter($request->colors, function ($value) {
-            return !empty(trim($value));
-        }) : null;
+            // Handle new images
+            if ($request->hasFile('images')) {
+                $currentMaxOrder = $product->images()->max('order') ?? -1;
 
-        $product->update([
-            'category_id' => $request->category_id,
-            'sub_category_id' => $request->sub_category_id,
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'description' => $request->description,
-            'price' => $request->price,
-            'old_price' => $request->old_price,
-            'discount_percentage' => $discountPercentage,
-            'stock' => $request->stock,
-            'brand' => $request->brand,
-            'model' => $request->model,
-            'condition' => $request->condition ?? 'new',
-            'weight' => $request->weight,
-            'dimensions' => $request->dimensions,
-            'sizes' => $sizes ? array_values($sizes) : null,
-            'colors' => $colors ? array_values($colors) : null,
-        ]);
+                foreach ($request->file('images') as $index => $image) {
+                    $path = $image->store('products', 'public');
 
-        if ($request->hasFile('images')) {
-            $currentMaxOrder = $product->images()->max('order') ?? 0;
-
-            foreach ($request->file('images') as $index => $image) {
-                $path = $image->store('products', 'public');
-
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'image_path' => $path,
-                    'order' => $currentMaxOrder + $index + 1,
-                    'is_primary' => $product->images()->count() === 0 && $index === 0,
-                ]);
+                    ProductImage::create([
+                        'product_id' => $product->id,
+                        'image_path' => $path,
+                        'order' => $currentMaxOrder + $index + 1,
+                        'is_primary' => $product->images()->count() === 0 && $index === 0,
+                    ]);
+                }
             }
-        }
 
-        return redirect()->route('vendor.products.index')
-            ->with('success', 'Product updated successfully!');
+            DB::commit();
+
+            return redirect()->route('vendor.products.index')
+                ->with('success', 'Product updated successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()
+                ->with('error', 'Failed to update product. Please try again.');
+        }
     }
 
     public function destroy(Product $product)
     {
-        // Check ownership
-        if ($product->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
+        $this->authorize('delete', $product);
+
+        DB::beginTransaction();
+        try {
+            // Delete images
+            foreach ($product->images as $image) {
+                Storage::disk('public')->delete($image->image_path);
+                $image->delete();
+            }
+
+            // Delete variants
+            $product->variants()->delete();
+
+            $product->delete();
+
+            DB::commit();
+
+            return redirect()->route('vendor.products.index')
+                ->with('success', 'Product deleted successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to delete product.');
         }
-
-        // Check if product has orders
-        if ($product->orderItems()->count() > 0) {
-            return redirect()->back()
-                ->with('error', 'Cannot delete product with existing orders. You can deactivate it instead.');
-        }
-
-        // Delete images from storage
-        foreach ($product->images as $image) {
-            Storage::disk('public')->delete($image->image_path);
-        }
-
-        $product->delete();
-
-        return redirect()->route('vendor.products.index')
-            ->with('success', 'Product deleted successfully!');
     }
 
-    public function deleteImage(ProductImage $image)
+    public function toggleStatus(Product $product)
     {
-        // Check ownership
-        if ($image->product->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
-        }
+        $this->authorize('update', $product);
 
-        // Don't allow deleting the last image
-        if ($image->product->images()->count() <= 1) {
-            return redirect()->back()->with([
+        $product->update(['is_active' => !$product->is_active]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product status updated successfully!',
+            'is_active' => $product->is_active
+        ]);
+    }
+
+    public function deleteImage(Product $product, ProductImage $image)
+    {
+        $this->authorize('update', $product);
+
+        if ($image->product_id !== $product->id) {
+            return response()->json([
                 'success' => false,
-                'message' => 'Cannot delete the last image. Product must have at least one image.'
-            ], 422);
-        }
-
-        // If deleting primary image, set another as primary
-        if ($image->is_primary) {
-            $nextImage = $image->product->images()
-                ->where('id', '!=', $image->id)
-                ->orderBy('order')
-                ->first();
-
-            if ($nextImage) {
-                $nextImage->update(['is_primary' => true]);
-            }
+                'message' => 'Invalid image'
+            ], 400);
         }
 
         Storage::disk('public')->delete($image->image_path);
         $image->delete();
 
-        return redirect()->back()->with([
+        // If this was the primary image, set another as primary
+        if ($image->is_primary) {
+            $newPrimary = $product->images()->first();
+            if ($newPrimary) {
+                $newPrimary->update(['is_primary' => true]);
+            }
+        }
+
+        return response()->json([
             'success' => true,
             'message' => 'Image deleted successfully!'
         ]);
     }
 
-    public function toggleStatus(Product $product)
+    public function reorderImages(Request $request, Product $product)
     {
-        // Check ownership
-        if ($product->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
+        $this->authorize('update', $product);
+
+        $validated = $request->validate([
+            'orders' => 'required|array',
+            'orders.*.id' => 'required|exists:product_images,id',
+            'orders.*.order' => 'required|integer|min:0',
+        ]);
+
+        foreach ($validated['orders'] as $item) {
+            ProductImage::where('id', $item['id'])
+                ->where('product_id', $product->id)
+                ->update(['order' => $item['order']]);
         }
 
-        $product->update(['is_active' => !$product->is_active]);
-
-        $status = $product->is_active ? 'activated' : 'deactivated';
-
-        return redirect()->back()
-            ->with('success', "Product {$status} successfully!");
+        return response()->json([
+            'success' => true,
+            'message' => 'Images reordered successfully!'
+        ]);
     }
 }

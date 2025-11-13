@@ -1,110 +1,96 @@
 <?php
-// ============================================
-// VENDOR CONTROLLER 1: OrderController (Updated)
-// File: app/Http/Controllers/Vendor/OrderController.php
-// ============================================
 
 namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
-use App\Models\OrderItem;
 use App\Models\Order;
+use App\Models\OrderItem;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = OrderItem::with(['order.user', 'product'])
-            ->where('vendor_id', auth()->id());
+        $query = auth()->user()->vendorOrderItems()
+            ->with(['order.user', 'product']);
 
-        // Filter by vendor status
         if ($request->filled('status')) {
-            $query->where('vendor_status', $request->status);
+            $query->where('status', $request->status);
         }
 
-        // Filter by order status
-        if ($request->filled('order_status')) {
-            $query->whereHas('order', function ($q) use ($request) {
-                $q->where('status', $request->order_status);
-            });
-        }
+        $orders = $query->latest()->paginate(20);
 
-        // Search by order number or customer
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->whereHas('order', function ($q) use ($search) {
-                $q->where('order_number', 'like', "%{$search}%")
-                    ->orWhere('customer_name', 'like', "%{$search}%")
-                    ->orWhere('customer_phone', 'like', "%{$search}%");
-            });
-        }
-
-        // Date range filter
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        $orderItems = $query->latest()->paginate(20);
-
-        return view('vendor.orders.index', compact('orderItems'));
+        return view('vendor.orders.index', compact('orders'));
     }
 
     public function show(Order $order)
     {
-        // Check if vendor has items in this order
-        $hasItems = $order->items()->where('vendor_id', auth()->id())->exists();
+        // Verify vendor has items in this order
+        $hasItems = $order->items()
+            ->where('vendor_id', auth()->id())
+            ->exists();
 
         if (!$hasItems) {
-            abort(403, 'Unauthorized access to this order.');
+            abort(403, 'Unauthorized access');
         }
 
         $order->load([
             'user',
-            'items' => function ($q) {
-                $q->where('vendor_id', auth()->id());
+            'items' => function ($query) {
+                $query->where('vendor_id', auth()->id())
+                    ->with('product.images');
             },
-            'items.product.primaryImage'
+            'shippingAddress',
+            'billingAddress'
         ]);
 
-        // Calculate vendor's portion of the order
-        $vendorTotal = $order->items->sum('total');
-
-        return view('vendor.orders.show', compact('order', 'vendorTotal'));
+        return view('vendor.orders.show', compact('order'));
     }
 
     public function updateStatus(Request $request, OrderItem $orderItem)
     {
-        // Check ownership
         if ($orderItem->vendor_id !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
         }
 
-        $request->validate([
-            'vendor_status' => 'required|in:pending,processing,shipped,delivered',
-            'vendor_notes' => 'nullable|string|max:1000',
+        $validated = $request->validate([
+            'status' => 'required|in:pending,processing,shipped,delivered,cancelled'
         ]);
 
-        $orderItem->update([
-            'vendor_status' => $request->vendor_status,
-            'vendor_notes' => $request->vendor_notes,
+        $orderItem->update(['status' => $validated['status']]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order status updated successfully!'
+        ]);
+    }
+
+    public function ship(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'tracking_number' => 'required|string|max:255',
+            'carrier' => 'required|string|max:255',
         ]);
 
-        // Check if all items in the order have been delivered by all vendors
-        $order = $orderItem->order;
-        $allDelivered = $order->items()->where('vendor_status', '!=', 'delivered')->count() === 0;
+        $orderItems = $order->items()
+            ->where('vendor_id', auth()->id())
+            ->get();
 
-        if ($allDelivered && $order->status !== 'delivered') {
-            $order->update([
-                'status' => 'delivered',
-                'delivered_at' => now()
+        if ($orderItems->isEmpty()) {
+            return back()->with('error', 'No items found for this vendor.');
+        }
+
+        foreach ($orderItems as $item) {
+            $item->update([
+                'status' => 'shipped',
+                'tracking_number' => $validated['tracking_number'],
+                'carrier' => $validated['carrier'],
             ]);
         }
 
-        return redirect()->back()
-            ->with('success', 'Order status updated successfully!');
+        return back()->with('success', 'Order marked as shipped!');
     }
 }

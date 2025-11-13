@@ -1,45 +1,68 @@
 <?php
-// app/Http/Controllers/Vendor/DashboardController.php
 
 namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
-use App\Models\OrderItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function index()
     {
+        $vendor = auth()->user();
 
-        $vendorId = auth()->id();
+        // Summary Statistics
+        $totalProducts = $vendor->products()->count();
+        $activeProducts = $vendor->products()->where('is_active', true)->count();
+        $totalOrders = $vendor->vendorOrderItems()->count();
+        $pendingOrders = $vendor->vendorOrderItems()->where('status', 'pending')->count();
 
-        $totalProducts = Product::where('user_id', $vendorId)->count();
-        $activeProducts = Product::where('user_id', $vendorId)->where('is_active', true)->count();
-        $totalOrders = OrderItem::where('vendor_id', $vendorId)->distinct('order_id')->count();
-        $outOfStock = Product::where('user_id', $vendorId)->where('stock', '<=', 0)->count();
-        $lowStockProducts = Product::where('user_id', $vendorId)->where('stock', '<=', 5)->count();
-        $pendingOrders = OrderItem::where('vendor_id', $vendorId)
+        $totalRevenue = $vendor->vendorOrderItems()
             ->whereHas('order', function ($q) {
-                $q->where('status', 'pending');
-            })
-            ->count();
-        $totalRevenue = OrderItem::where('vendor_id', $vendorId)
-            ->whereHas('order', function ($q) {
-                $q->where('status', 'delivered');
+                $q->where('payment_status', 'paid');
             })
             ->sum('total');
 
-        $recentOrders = OrderItem::with(['order.user', 'product'])
-            ->where('vendor_id', $vendorId)
+        $pendingEarnings = $vendor->vendorOrderItems()
+            ->where('status', 'delivered')
+            ->whereNull('payout_id')
+            ->sum('total');
+
+        // Recent Orders
+        $recentOrders = $vendor->vendorOrderItems()
+            ->with(['order.user', 'product'])
             ->latest()
             ->take(10)
             ->get();
 
-        $topProducts = Product::where('user_id', $vendorId)
-            ->withCount(['carts', 'wishlists'])
-            ->orderBy('views', 'desc')
+        // Top Selling Products
+        $topProducts = $vendor->products()
+            ->withCount(['orderItems as total_sold' => function ($query) {
+                $query->select(DB::raw('SUM(quantity)'));
+            }])
+            ->orderBy('total_sold', 'desc')
+            ->take(5)
+            ->get();
+
+        // Monthly Revenue
+        $monthlyRevenue = $vendor->vendorOrderItems()
+            ->whereHas('order', function ($q) {
+                $q->where('payment_status', 'paid');
+            })
+            ->where('created_at', '>=', now()->subMonths(6))
+            ->select(
+                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw('SUM(total) as revenue')
+            )
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        // Low Stock Products
+        $lowStockProducts = $vendor->products()
+            ->where('stock', '<', 10)
+            ->where('is_active', true)
             ->take(5)
             ->get();
 
@@ -47,11 +70,12 @@ class DashboardController extends Controller
             'totalProducts',
             'activeProducts',
             'totalOrders',
+            'pendingOrders',
             'totalRevenue',
+            'pendingEarnings',
             'recentOrders',
             'topProducts',
-            'pendingOrders',
-            'outOfStock',
+            'monthlyRevenue',
             'lowStockProducts'
         ));
     }

@@ -4,17 +4,17 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\SubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::withCount('products', 'subCategories')
+        $categories = Category::withCount(['products', 'subCategories'])
             ->orderBy('order')
-            ->get();
+            ->paginate(20);
 
         return view('super-admin.categories.index', compact('categories'));
     }
@@ -26,24 +26,37 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:categories',
-            'icon' => 'nullable|string|max:50',
-            'color' => 'nullable|string|max:20',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:categories,name',
+            'slug' => 'nullable|string|max:255|unique:categories,slug',
+            'description' => 'nullable|string|max:1000',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'icon' => 'nullable|string|max:100',
             'order' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
+            'is_featured' => 'boolean',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
         ]);
 
-        Category::create([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'icon' => $request->icon ?? 'fa-box',
-            'color' => $request->color ?? '#4CAF50',
-            'order' => $request->order ?? 0,
-            'is_active' => true,
-        ]);
+        if (!$request->filled('slug')) {
+            $validated['slug'] = Str::slug($validated['name']);
+        }
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('categories', 'public');
+        }
+
+        Category::create($validated);
 
         return redirect()->route('super-admin.categories.index')
             ->with('success', 'Category created successfully!');
+    }
+
+    public function show(Category $category)
+    {
+        $category->load(['subCategories', 'products']);
+        return view('super-admin.categories.show', compact('category'));
     }
 
     public function edit(Category $category)
@@ -53,22 +66,31 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
-            'icon' => 'nullable|string|max:50',
-            'color' => 'nullable|string|max:20',
+            'slug' => 'nullable|string|max:255|unique:categories,slug,' . $category->id,
+            'description' => 'nullable|string|max:1000',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'icon' => 'nullable|string|max:100',
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
+            'is_featured' => 'boolean',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
         ]);
 
-        $category->update([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'icon' => $request->icon,
-            'color' => $request->color,
-            'order' => $request->order,
-            'is_active' => $request->has('is_active'),
-        ]);
+        if (!$request->filled('slug')) {
+            $validated['slug'] = Str::slug($validated['name']);
+        }
+
+        if ($request->hasFile('image')) {
+            if ($category->image) {
+                Storage::disk('public')->delete($category->image);
+            }
+            $validated['image'] = $request->file('image')->store('categories', 'public');
+        }
+
+        $category->update($validated);
 
         return redirect()->route('super-admin.categories.index')
             ->with('success', 'Category updated successfully!');
@@ -76,23 +98,17 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
-        if ($category->products()->count() > 0 || $category->subCategories()->count() > 0) {
-            return redirect()->back()
-                ->with('error', 'Cannot delete category with existing products or sub-categories!');
+        if ($category->products()->count() > 0) {
+            return back()->with('error', 'Cannot delete category with existing products.');
+        }
+
+        if ($category->image) {
+            Storage::disk('public')->delete($category->image);
         }
 
         $category->delete();
 
         return redirect()->route('super-admin.categories.index')
             ->with('success', 'Category deleted successfully!');
-    }
-
-    public function show(Category $category)
-    {
-        $category->load(['products.primaryImage', 'products.user', 'subCategories' => function ($query) {
-            $query->orderBy('order')->withCount('products');
-        }]);
-
-        return view('super-admin.categories.show', compact('category'));
     }
 }

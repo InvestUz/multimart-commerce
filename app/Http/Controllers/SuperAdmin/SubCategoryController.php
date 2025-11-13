@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
 use App\Models\SubCategory;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -13,7 +13,7 @@ class SubCategoryController extends Controller
     public function index()
     {
         $subCategories = SubCategory::with('category')
-            ->orderBy('category_id')
+            ->withCount('products')
             ->orderBy('order')
             ->paginate(20);
 
@@ -22,65 +22,59 @@ class SubCategoryController extends Controller
 
     public function create()
     {
-        $categories = Category::where('is_active', true)
-            ->orderBy('order')
-            ->get();
-
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
         return view('super-admin.sub-categories.create', compact('categories'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
-            'name' => 'required|string|max:255|unique:sub_categories',
-            'icon' => 'nullable|string|max:50',
-            'color' => 'nullable|string|max:20',
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:sub_categories,slug',
+            'description' => 'nullable|string|max:1000',
             'order' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
         ]);
 
-        SubCategory::create([
-            'category_id' => $request->category_id,
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'icon' => $request->icon ?? 'fa-box',
-            'color' => $request->color ?? '#4CAF50',
-            'order' => $request->order ?? 0,
-            'is_active' => $request->has('is_active'),
-        ]);
+        if (!$request->filled('slug')) {
+            $validated['slug'] = Str::slug($validated['name']);
+        }
+
+        SubCategory::create($validated);
 
         return redirect()->route('super-admin.sub-categories.index')
             ->with('success', 'Sub-category created successfully!');
     }
 
+    public function show(SubCategory $subCategory)
+    {
+        $subCategory->load(['category', 'products']);
+        return view('super-admin.sub-categories.show', compact('subCategory'));
+    }
+
     public function edit(SubCategory $subCategory)
     {
-        $categories = Category::where('is_active', true)
-            ->orderBy('order')
-            ->get();
-
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
         return view('super-admin.sub-categories.edit', compact('subCategory', 'categories'));
     }
 
     public function update(Request $request, SubCategory $subCategory)
     {
-        $request->validate([
+        $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
-            'name' => 'required|string|max:255|unique:sub_categories,name,' . $subCategory->id,
-            'icon' => 'nullable|string|max:50',
-            'color' => 'nullable|string|max:20',
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:sub_categories,slug,' . $subCategory->id,
+            'description' => 'nullable|string|max:1000',
             'order' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
         ]);
 
-        $subCategory->update([
-            'category_id' => $request->category_id,
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'icon' => $request->icon ?? 'fa-box',
-            'color' => $request->color ?? '#4CAF50',
-            'order' => $request->order ?? 0,
-            'is_active' => $request->has('is_active'),
-        ]);
+        if (!$request->filled('slug')) {
+            $validated['slug'] = Str::slug($validated['name']);
+        }
+
+        $subCategory->update($validated);
 
         return redirect()->route('super-admin.sub-categories.index')
             ->with('success', 'Sub-category updated successfully!');
@@ -89,21 +83,13 @@ class SubCategoryController extends Controller
     public function destroy(SubCategory $subCategory)
     {
         if ($subCategory->products()->count() > 0) {
-            return redirect()->back()
-                ->with('error', 'Cannot delete sub-category with existing products! Please reassign or delete the products first.');
+            return back()->with('error', 'Cannot delete sub-category with existing products.');
         }
 
         $subCategory->delete();
 
         return redirect()->route('super-admin.sub-categories.index')
             ->with('success', 'Sub-category deleted successfully!');
-    }
-
-    public function show(SubCategory $subCategory)
-    {
-        $subCategory->load(['category', 'products.primaryImage', 'products.user']);
-
-        return view('super-admin.sub-categories.show', compact('subCategory'));
     }
 
     public function getByCategory($categoryId)
@@ -113,6 +99,6 @@ class SubCategoryController extends Controller
             ->orderBy('order')
             ->get(['id', 'name', 'slug']);
 
-        return $subCategories;
+        return response()->json($subCategories);
     }
 }

@@ -9,96 +9,71 @@ use Illuminate\Http\Request;
 
 class ReviewController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
+            'order_id' => 'required|exists:orders,id',
             'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:1000',
+            'title' => 'required|string|max:255',
+            'comment' => 'required|string|max:2000',
         ]);
 
-        // Check if user already reviewed this product
+        $order = Order::findOrFail($validated['order_id']);
+        $this->authorize('view', $order);
+
+        // Check if order contains this product
+        $orderItem = $order->items()
+            ->where('product_id', $validated['product_id'])
+            ->first();
+
+        if (!$orderItem) {
+            return back()->with('error', 'You can only review products you have purchased.');
+        }
+
+        // Check if already reviewed
         $existingReview = Review::where('user_id', auth()->id())
-            ->where('product_id', $request->product_id)
+            ->where('product_id', $validated['product_id'])
+            ->where('order_id', $validated['order_id'])
             ->first();
 
         if ($existingReview) {
-             return redirect()->back()->with([
-                'success' => false,
-                'message' => 'You have already reviewed this product!'
-            ], 422);
+            return back()->with('error', 'You have already reviewed this product.');
         }
 
-        // Check if user purchased this product
-        $hasPurchased = Order::where('user_id', auth()->id())
-            ->whereHas('items', function ($query) use ($request) {
-                $query->where('product_id', $request->product_id);
-            })
-            ->where('status', 'delivered')
-            ->exists();
-
-        $review = Review::create([
+        Review::create([
             'user_id' => auth()->id(),
-            'product_id' => $request->product_id,
-            'rating' => $request->rating,
-            'comment' => $request->comment,
-            'is_approved' => false, // Requires admin approval
-            'is_verified_purchase' => $hasPurchased,
+            'product_id' => $validated['product_id'],
+            'order_id' => $validated['order_id'],
+            'rating' => $validated['rating'],
+            'title' => $validated['title'],
+            'comment' => $validated['comment'],
+            'is_approved' => false,
         ]);
 
-        // Update product rating (even if not approved yet, for immediate feedback)
-        $product = Product::find($request->product_id);
-        $product->updateRating();
-
-         return redirect()->back()->with([
-            'success' => true,
-            'message' => 'Review submitted successfully! It will be visible after admin approval.'
-        ]);
+        return back()->with('success', 'Review submitted successfully! It will be visible after approval.');
     }
 
     public function update(Request $request, Review $review)
     {
-        if ($review->user_id !== auth()->id()) {
-            abort(403);
-        }
+        $this->authorize('update', $review);
 
-        $request->validate([
+        $validated = $request->validate([
             'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:1000',
+            'title' => 'required|string|max:255',
+            'comment' => 'required|string|max:2000',
         ]);
 
-        $review->update([
-            'rating' => $request->rating,
-            'comment' => $request->comment,
-            'is_approved' => false, // Reset approval status
-        ]);
+        $review->update($validated);
 
-        // Update product rating
-        $review->product->updateRating();
-
-        return redirect()->back()->with('success', 'Review updated successfully!');
+        return back()->with('success', 'Review updated successfully!');
     }
 
     public function destroy(Review $review)
     {
-        if ($review->user_id !== auth()->id() && !auth()->user()->isSuperAdmin()) {
-            abort(403);
-        }
-
-        $productId = $review->product_id;
+        $this->authorize('delete', $review);
         $review->delete();
 
-        // Update product rating
-        $product = Product::find($productId);
-        if ($product) {
-            $product->updateRating();
-        }
-
-        return redirect()->back()->with('success', 'Review deleted successfully!');
+        return back()->with('success', 'Review deleted successfully!');
     }
 }

@@ -11,45 +11,23 @@ class VendorController extends Controller
     public function index(Request $request)
     {
         $query = User::where('role', 'vendor')
-            ->withCount(['products', 'orderItems']);
+            ->withCount('products')
+            ->withSum('vendorOrders as total_revenue', 'total');
 
-        // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('store_name', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('shop_name', 'like', "%{$search}%");
             });
         }
 
-        // Filter by status
         if ($request->filled('status')) {
-            if ($request->status === 'active') {
-                $query->where('is_active', true);
-            } elseif ($request->status === 'inactive') {
-                $query->where('is_active', false);
-            }
+            $query->where('is_active', $request->status === 'active');
         }
 
-        // Sort
-        $sortBy = $request->input('sort_by', 'latest');
-        switch ($sortBy) {
-            case 'name':
-                $query->orderBy('name', 'asc');
-                break;
-            case 'products':
-                $query->orderBy('products_count', 'desc');
-                break;
-            case 'orders':
-                $query->orderBy('order_items_count', 'desc');
-                break;
-            default:
-                $query->latest();
-        }
-
-        $vendors = $query->paginate(20)->withQueryString();
+        $vendors = $query->latest()->paginate(20);
 
         return view('super-admin.vendors.index', compact('vendors'));
     }
@@ -57,75 +35,59 @@ class VendorController extends Controller
     public function show(User $vendor)
     {
         if ($vendor->role !== 'vendor') {
-            abort(404, 'Vendor not found.');
+            abort(404);
         }
 
-        $vendor->load(['products.primaryImage', 'products.category']);
-
+        $vendor->load(['products', 'vendorOrders']);
+        $totalRevenue = $vendor->vendorOrders()->sum('total');
         $totalProducts = $vendor->products()->count();
-        $activeProducts = $vendor->products()->where('is_active', true)->count();
-        $totalOrders = $vendor->orderItems()->distinct('order_id')->count('order_id');
-        $totalRevenue = $vendor->orderItems()
-            ->whereHas('order', function ($q) {
-                $q->where('status', 'delivered');
-            })
-            ->sum('total');
+        $totalOrders = $vendor->vendorOrders()->count();
 
-        $recentProducts = $vendor->products()
-            ->with(['primaryImage', 'category'])
-            ->latest()
-            ->take(10)
-            ->get();
-
-        $recentOrders = $vendor->orderItems()
-            ->with(['order', 'product'])
-            ->latest()
-            ->take(10)
-            ->get();
-
-        return view('super-admin.vendors.show', compact(
-            'vendor',
-            'totalProducts',
-            'activeProducts',
-            'totalOrders',
-            'totalRevenue',
-            'recentProducts',
-            'recentOrders'
-        ));
+        return view('super-admin.vendors.show', compact('vendor', 'totalRevenue', 'totalProducts', 'totalOrders'));
     }
 
     public function toggleStatus(User $vendor)
     {
         if ($vendor->role !== 'vendor') {
-            abort(404, 'Vendor not found.');
+            return response()->json(['success' => false, 'message' => 'Invalid vendor'], 400);
         }
 
         $vendor->update(['is_active' => !$vendor->is_active]);
 
-        $status = $vendor->is_active ? 'activated' : 'deactivated';
+        return response()->json([
+            'success' => true,
+            'message' => 'Vendor status updated successfully!',
+            'is_active' => $vendor->is_active
+        ]);
+    }
 
-        return redirect()->back()
-            ->with('success', "Vendor {$status} successfully!");
+    public function approve(User $vendor)
+    {
+        if ($vendor->role !== 'vendor') {
+            return response()->json(['success' => false, 'message' => 'Invalid vendor'], 400);
+        }
+
+        $vendor->update(['is_approved' => true, 'is_active' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Vendor approved successfully!'
+        ]);
     }
 
     public function destroy(User $vendor)
     {
         if ($vendor->role !== 'vendor') {
-            abort(404, 'Vendor not found.');
+            abort(404);
         }
 
-        // Check if vendor has orders
-        if ($vendor->orderItems()->count() > 0) {
-            return redirect()->back()
-                ->with('error', 'Cannot delete vendor with existing orders! Please deactivate the vendor instead.');
+        if ($vendor->products()->count() > 0) {
+            return back()->with('error', 'Cannot delete vendor with existing products.');
         }
 
-        $vendorName = $vendor->name;
-
-        // This will also delete all vendor's products due to cascade
         $vendor->delete();
 
         return redirect()->route('super-admin.vendors.index')
-            ->with('success', "Vendor '{$vendorName}' and all their products deleted successfully!");
+            ->with('success', 'Vendor deleted successfully!');
     }
 }

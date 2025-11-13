@@ -1,18 +1,12 @@
 <?php
-// ============================================
-// SUPER ADMIN CONTROLLER 1: DashboardController
-// File: app/Http/Controllers/SuperAdmin/DashboardController.php
-// ============================================
 
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Product;
 use App\Models\Order;
-use App\Models\Category;
-use App\Models\Review;
-use App\Models\OrderItem;
+use App\Models\Product;
+use App\Models\User;
+use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -20,91 +14,64 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Statistics
-        $totalVendors = User::where('role', 'vendor')->count();
-        $activeVendors = User::where('role', 'vendor')->where('is_active', true)->count();
-        $totalCustomers = User::where('role', 'customer')->count();
-        $totalProducts = Product::count();
-        $activeProducts = Product::where('is_active', true)->count();
+        // Summary Statistics
+        $totalRevenue = Order::where('payment_status', 'paid')->sum('total');
         $totalOrders = Order::count();
-        $totalRevenue = Order::where('status', 'delivered')->sum('total');
+        $totalProducts = Product::count();
+        $totalVendors = User::where('role', 'vendor')->count();
+        $totalCustomers = User::where('role', 'customer')->count();
         $pendingOrders = Order::where('status', 'pending')->count();
-        $pendingReviews = Review::where('is_approved', false)->count();
-        $totalCategories = Category::count();
 
-        // Recent orders
+        // Recent Orders
         $recentOrders = Order::with(['user', 'items'])
             ->latest()
             ->take(10)
             ->get();
 
-        // Top products by views
-        $topProducts = Product::with(['primaryImage', 'category', 'user'])
-            ->orderBy('views', 'desc')
+        // Top Selling Products
+        $topProducts = Product::withCount(['orderItems as total_sold' => function ($query) {
+                $query->select(DB::raw('SUM(quantity)'));
+            }])
+            ->orderBy('total_sold', 'desc')
             ->take(10)
             ->get();
 
-        // Top products by sales
-        $topSellingProducts = Product::with(['primaryImage', 'category', 'user'])
-            ->orderBy('total_sales', 'desc')
-            ->take(10)
-            ->get();
-
-        // Monthly revenue chart data (last 12 months)
-        $monthlyRevenue = Order::select(
-                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
-                DB::raw('SUM(total) as revenue'),
-                DB::raw('COUNT(*) as orders')
-            )
-            ->where('status', 'delivered')
+        // Monthly Revenue Chart Data
+        $monthlyRevenue = Order::where('payment_status', 'paid')
             ->where('created_at', '>=', now()->subMonths(12))
+            ->select(
+                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw('SUM(total) as revenue')
+            )
             ->groupBy('month')
             ->orderBy('month')
             ->get();
 
-        // Orders by status
-        $ordersByStatus = Order::select('status', DB::raw('count(*) as count'))
+        // Order Status Distribution
+        $orderStatusDistribution = Order::select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
-            ->get()
-            ->pluck('count', 'status');
-
-        // Top vendors by revenue
-        $topVendors = User::where('role', 'vendor')
-            ->withSum(['orderItems' => function($q) {
-                $q->whereHas('order', function($query) {
-                    $query->where('status', 'delivered');
-                });
-            }], 'total')
-            ->orderBy('order_items_sum_total', 'desc')
-            ->take(5)
             ->get();
 
-        // Recent reviews
-        $recentReviews = Review::with(['user', 'product'])
-            ->where('is_approved', false)
-            ->latest()
+        // Top Vendors
+        $topVendors = User::where('role', 'vendor')
+            ->withCount('products')
+            ->withSum('vendorOrders as total_revenue', 'total')
+            ->orderBy('total_revenue', 'desc')
             ->take(5)
             ->get();
 
         return view('super-admin.dashboard', compact(
-            'totalVendors',
-            'activeVendors',
-            'totalCustomers',
-            'totalProducts',
-            'activeProducts',
-            'totalOrders',
             'totalRevenue',
+            'totalOrders',
+            'totalProducts',
+            'totalVendors',
+            'totalCustomers',
             'pendingOrders',
-            'pendingReviews',
-            'totalCategories',
             'recentOrders',
             'topProducts',
-            'topSellingProducts',
             'monthlyRevenue',
-            'ordersByStatus',
-            'topVendors',
-            'recentReviews'
+            'orderStatusDistribution',
+            'topVendors'
         ));
     }
 }
-
