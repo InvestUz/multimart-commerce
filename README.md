@@ -64,3 +64,142 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## OXIRGI_XATO
+```
+BadMethodCallException
+PHP 8.1.9
+10.49.1
+Call to undefined method App\Models\User::vendorOrders()
+
+Bad Method Call
+Did you mean App\Models\User::vendorOrderItems() ?
+
+
+Expand vendor frames
+8 vendor frames
+App
+ \ 
+Http
+ \ 
+Controllers
+ \ 
+SuperAdmin
+ \ 
+DashboardController
+ 
+: 58
+index
+6 vendor frames
+App
+ \ 
+Http
+ \ 
+Middleware
+ \ 
+SuperAdminMiddleware
+ 
+: 26
+handle
+40 vendor frames
+C:\Users\inves\OneDrive\Ishchi stol\multimart-commerce\public\index
+.php
+ 
+: 52
+require_once
+1 vendor frame
+C:\Users\inves\OneDrive\Ishchi stol\multimart-commerce\app\Http\Controllers\SuperAdmin\DashboardController
+.php
+ 
+: 58
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+
+                DB::raw('SUM(total) as revenue')
+
+            )
+
+            ->groupBy('month')
+
+            ->orderBy('month')
+
+            ->get();
+
+
+
+        // Order Status Distribution
+
+        $orderStatusDistribution = Order::select('status', DB::raw('count(*) as count'))
+
+            ->groupBy('status')
+
+            ->get();
+
+
+
+        // Top Vendors
+
+        $topVendors = User::where('role', 'vendor')
+
+            ->withCount('products')
+
+            ->withSum('vendorOrders as total_revenue', 'total')
+
+            ->orderBy('total_revenue', 'desc')
+
+            ->take(5)
+
+            ->get();
+
+
+
+        return view('super-admin.dashboard', compact(
+
+            'totalRevenue',
+
+            'totalOrders',
+
+            'totalProducts',
+
+            'totalVendors',
+
+            'totalCustomers',
+
+            'pendingOrders',
+
+            'recentOrders',
+
+            'topProducts',
+
+            'monthlyRevenue',
+```
