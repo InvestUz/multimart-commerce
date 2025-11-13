@@ -443,10 +443,14 @@ class SampleDataSeeder extends Seeder
         ];
 
         foreach ($products->take(30) as $product) {
-            $numReviews = rand(3, 10);
-            for ($j = 0; $j < $numReviews; $j++) {
+            // Get a random subset of customers to review this product
+            // Ensure we don't try to get more reviewers than we have customers
+            $numReviews = rand(3, min(10, $customers->count()));
+            $reviewers = $customers->random(min($numReviews, $customers->count()));
+
+            foreach ($reviewers as $reviewer) {
                 Review::create([
-                    'user_id' => $customers->random()->id,
+                    'user_id' => $reviewer->id,
                     'product_id' => $product->id,
                     'rating' => rand(3, 5),
                     'comment' => $reviewComments[array_rand($reviewComments)],

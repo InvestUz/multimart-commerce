@@ -12,7 +12,7 @@ class Banner extends Model
     protected $fillable = [
         'title', 'description', 'image_path', 'link', 'type',
         'position', 'button_text', 'order', 'is_active',
-        'starts_at', 'expires_at', 'clicks',
+        'starts_at', 'expires_at', 'clicks','start_date','end_date',
     ];
 
     protected $casts = [

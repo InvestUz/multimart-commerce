@@ -25,6 +25,9 @@ return new class extends Migration
             $table->timestamp('starts_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->integer('clicks')->default(0);
+
+            $table->dateTime('start_date')->nullable();
+            $table->dateTime('end_date')->nullable();
             $table->timestamps();
 
             $table->index(['type', 'is_active']);

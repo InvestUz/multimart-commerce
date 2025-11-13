@@ -19,14 +19,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 
 class HomeController extends Controller
 {
     public function index()
     {
+        // Check if banners table has date columns
+        $hasDateColumns = Schema::hasColumns('banners', ['start_date', 'end_date']);
+
         $banners = Banner::where('is_active', true)
-            ->where('start_date', '<=', now())
-            ->where('end_date', '>=', now())
+            ->when($hasDateColumns, function ($query) {
+                $query->where('start_date', '<=', now())
+                      ->where('end_date', '>=', now());
+            })
             ->orderBy('order')
             ->get();
 
@@ -52,9 +58,14 @@ class HomeController extends Controller
             ->take(8)
             ->get();
 
+        // Check if flash_sales table has date columns
+        $hasFlashSaleDateColumns = Schema::hasColumns('flash_sales', ['start_date', 'end_date']);
+
         $flashSale = FlashSale::where('is_active', true)
-            ->where('start_date', '<=', now())
-            ->where('end_date', '>=', now())
+            ->when($hasFlashSaleDateColumns, function ($query) {
+                $query->where('start_date', '<=', now())
+                      ->where('end_date', '>=', now());
+            })
             ->with(['products.images', 'products.vendor'])
             ->first();
 

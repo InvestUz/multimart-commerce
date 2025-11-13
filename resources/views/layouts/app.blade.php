@@ -1,215 +1,235 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name') }} - @yield('title', 'Multi-Vendor E-Commerce')</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary': '#4CAF50',
-                        'pastel-blue': '#E1F5FE',
-                        'pastel-pink': '#FCE4EC',
-                        'pastel-beige': '#F5F5DC',
-                        'pastel-green': '#E8F5E8',
-                        'soft-green': '#A5D6A7',
-                    }
+    <title>@yield('title', config('app.name', 'Multi-Vendor E-Commerce'))</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+
+    <!-- Styles -->
+    {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Alpine.js (if you're using it) -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<!-- If you have custom CSS, you can link it separately -->
+<link rel="stylesheet" href="{{ asset('css/custom.css') }}">
+
+<!-- If you have custom JavaScript, you can link it separately -->
+<script src="{{ asset('js/custom.js') }}"></script>
+
+<!-- Optional: Tailwind CSS Configuration (if you need custom config) -->
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    primary: '#3490dc',
+                    secondary: '#ffed4e',
+                    danger: '#e3342f',
                 }
             }
         }
-    </script>
+    }
+</script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
     @stack('styles')
 </head>
-
-<body class="bg-gray-50">
-    <!-- Header -->
-<header class="bg-white shadow-sm sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-wrap justify-between items-center h-16 gap-2">
-            <!-- Logo -->
-            <div class="flex items-center flex-shrink-0">
-                <a href="{{ route('dashboard') }}" class="text-xl sm:text-2xl font-bold text-primary">
-                    <i class="fas fa-shopping-bag"></i> OneBazar
-                </a>
-            </div>
-
-            <!-- Search (mobil uchun kichrayadi, yashirmaymiz) -->
-            <div class="flex-1 max-w-md mx-2 sm:mx-8">
-                <form action="{{ route('search') }}" method="GET" class="relative">
-                    <input type="text" name="query" placeholder="Search..."
-                        class="w-full px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                        value="{{ request('query') }}">
-                    <button type="submit"
-                        class="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 bg-primary text-white px-2 sm:px-4 py-1 rounded-full text-xs sm:text-sm">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </form>
-            </div>
-
-            <!-- Navigation -->
-            <nav class="flex items-center space-x-2 sm:space-x-4 text-sm">
-                @auth
-                    <a href="{{ route('wishlist.index') }}" class="text-gray-600 hover:text-primary relative">
-                        <i class="fas fa-heart text-lg sm:text-xl"></i>
-                        <span class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-[10px]"
-                            id="wishlist-count">0</span>
-                    </a>
-                    <a href="{{ route('cart.index') }}" class="text-gray-600 hover:text-primary relative">
-                        <i class="fas fa-shopping-cart text-lg sm:text-xl"></i>
-                    <span class="absolute -top-1.5 -right-1.5 bg-primary text-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold"
-                            id="cart-count">0</span>
-                    </a>
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open"
-                            class="flex items-center space-x-1 text-gray-700 hover:text-primary focus:outline-none text-xs sm:text-sm">
-                            <i class="fas fa-user-circle text-lg sm:text-2xl"></i>
-                            <span class="hidden sm:inline">{{ auth()->user()->name }}</span>
-                            <i class="fas fa-chevron-down text-xs"></i>
-                        </button>
-
-                        <div x-show="open" @click.away="open = false" x-transition
-                            class="absolute right-0 mt-2 w-40 sm:w-48 bg-white rounded-lg shadow-lg py-2 z-50 text-xs sm:text-sm">
-                            @if (auth()->user()->isSuperAdmin())
-                                <a href="{{ route('super-admin.dashboard') }}"
-                                    class="block px-3 sm:px-4 py-2 hover:bg-gray-100">
-                                    <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
-                                </a>
-                            @elseif(auth()->user()->isVendor())
-                                <a href="{{ route('vendor.dashboard') }}" class="block px-3 sm:px-4 py-2 hover:bg-gray-100">
-                                    <i class="fas fa-store mr-2"></i> My Store
-                                </a>
-                            @endif
-                            <a href="{{ route('orders.index') }}" class="block px-3 sm:px-4 py-2 hover:bg-gray-100">
-                                <i class="fas fa-box mr-2"></i> My Orders
+<body class="font-sans antialiased">
+    <div class="min-h-screen bg-gray-100">
+        <!-- Navigation -->
+        <nav class="bg-white border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex">
+                        <!-- Logo -->
+                        <div class="flex-shrink-0 flex items-center">
+                            <a href="{{ route('home') }}" class="text-xl font-bold text-gray-800">
+                                {{ config('app.name', 'E-Commerce') }}
                             </a>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit"
-                                    class="w-full text-left px-3 sm:px-4 py-2 hover:bg-gray-100 text-red-600">
-                                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
-                                </button>
-                            </form>
+                        </div>
+
+                        <!-- Navigation Links -->
+                        <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                            <a href="{{ route('home') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                Home
+                            </a>
+                            <a href="{{ route('brands.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                Brands
+                            </a>
+                            <a href="{{ route('about') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                About
+                            </a>
+                            <a href="{{ route('contact') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                Contact
+                            </a>
                         </div>
                     </div>
-                @else
-                    <a href="{{ route('login') }}" class="text-gray-600 hover:text-primary text-xs sm:text-sm">
-                        <i class="fas fa-sign-in-alt mr-1"></i> Login
-                    </a>
-                    <a href="{{ route('register') }}"
-                        class="bg-primary text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg hover:bg-green-600 text-xs sm:text-sm">
-                        Register
-                    </a>
-                @endauth
-            </nav>
-        </div>
-    </div>
-</header>
 
-    <!-- Main Content -->
-    <main class="min-h-screen">
-        @if (session('success'))
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative"
-                    role="alert">
-                    <span class="block sm:inline">{{ session('success') }}</span>
+                    <!-- Right Side -->
+                    <div class="hidden sm:flex sm:items-center sm:ml-6 space-x-4">
+                        <!-- Search -->
+                        <form action="{{ route('search') }}" method="GET" class="flex">
+                            <input type="text" name="q" placeholder="Search products..."
+                                   class="rounded-l-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" />
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-r-md hover:bg-indigo-700">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+
+                        @auth
+                            <!-- Wishlist -->
+                            <a href="{{ route('wishlist.index') }}" class="relative text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-heart text-xl"></i>
+                                <span id="wishlist-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                    0
+                                </span>
+                            </a>
+
+                            <!-- Cart -->
+                            <a href="{{ route('cart.index') }}" class="relative text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-shopping-cart text-xl"></i>
+                                <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                    0
+                                </span>
+                            </a>
+
+                            <!-- Profile Dropdown -->
+                            <div class="relative" x-data="{ open: false }">
+                                <button @click="open = !open" class="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700">
+                                    <span>{{ Auth::user()->name }}</span>
+                                    <i class="fas fa-chevron-down ml-1"></i>
+                                </button>
+
+                                <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                                    @if(Auth::user()->isSuperAdmin())
+                                        <a href="{{ route('super-admin.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            Admin Dashboard
+                                        </a>
+                                    @elseif(Auth::user()->isVendor())
+                                        <a href="{{ route('vendor.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            Vendor Dashboard
+                                        </a>
+                                    @endif
+
+                                    <a href="{{ route('orders.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        My Orders
+                                    </a>
+                                    <a href="{{ route('account.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        Profile
+                                    </a>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            Logout
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @else
+                            <a href="{{ route('login') }}" class="text-gray-500 hover:text-gray-700">Login</a>
+                            <a href="{{ route('register') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                                Register
+                            </a>
+                        @endauth
+                    </div>
                 </div>
             </div>
-        @endif
+        </nav>
 
-        @if (session('error'))
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                    <span class="block sm:inline">{{ session('error') }}</span>
+        <!-- Page Content -->
+        <main>
+            @if (session('success'))
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                        <span class="block sm:inline">{{ session('success') }}</span>
+                    </div>
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                        <span class="block sm:inline">{{ session('error') }}</span>
+                    </div>
+                </div>
+            @endif
+
+            @yield('content')
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white mt-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">About Us</h3>
+                        <p class="text-gray-400">Your trusted multi-vendor e-commerce platform.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                        <ul class="space-y-2">
+                            <li><a href="{{ route('about') }}" class="text-gray-400 hover:text-white">About</a></li>
+                            <li><a href="{{ route('contact') }}" class="text-gray-400 hover:text-white">Contact</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Customer Service</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-400 hover:text-white">Help Center</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white">Returns</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Newsletter</h3>
+                        <form action="{{ route('newsletter.subscribe') }}" method="POST">
+                            @csrf
+                            <input type="email" name="email" placeholder="Your email"
+                                   class="w-full px-3 py-2 text-gray-900 rounded-md" required />
+                            <button type="submit" class="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                                Subscribe
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="mt-8 pt-8 border-t border-gray-700 text-center text-gray-400">
+                    <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
                 </div>
             </div>
-        @endif
-
-        @yield('content')
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white mt-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
-            <div>
-                <h3 class="text-lg font-bold mb-3">MultiMart</h3>
-                <p class="text-gray-400 text-xs">Your one-stop marketplace for everything you need.</p>
-            </div>
-            <div>
-                <h4 class="font-semibold mb-3">Quick Links</h4>
-                <ul class="space-y-1 text-gray-400 text-xs">
-                    <li><a href="{{ route('dashboard') }}" class="hover:text-white">Home</a></li>
-                    <li><a href="{{ route('search') }}" class="hover:text-white">Shop</a></li>
-                    <li><a href="#" class="hover:text-white">About Us</a></li>
-                    <li><a href="#" class="hover:text-white">Contact</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="font-semibold mb-3">Customer Service</h4>
-                <ul class="space-y-1 text-gray-400 text-xs">
-                    <li><a href="#" class="hover:text-white">Help Center</a></li>
-                    <li><a href="#" class="hover:text-white">Track Order</a></li>
-                    <li><a href="#" class="hover:text-white">Returns</a></li>
-                    <li><a href="#" class="hover:text-white">Shipping Info</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="font-semibold mb-3">Contact Us</h4>
-                <ul class="space-y-1 text-gray-400 text-xs">
-                    <li><i class="fas fa-phone mr-2"></i> +998 90 123 45 67</li>
-                    <li><i class="fas fa-envelope mr-2"></i> info@multimart.com</li>
-                    <li><i class="fas fa-map-marker-alt mr-2"></i> Tashkent, Uzbekistan</li>
-                </ul>
-            </div>
-        </div>
-        <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-xs">
-            <p>&copy; 2025 MultiMart. All rights reserved.</p>
-        </div>
+        </footer>
     </div>
-</footer>
+
+    @stack('scripts')
 
     <script>
         // Update cart and wishlist counts
+        @auth
         function updateCounts() {
-            @auth
-            // Update cart count
-            fetch('{{ route('cart.count') }}')
+            fetch('{{ route("cart.count") }}')
                 .then(res => res.json())
                 .then(data => {
-                    const cartCountElement = document.getElementById('cart-count');
-                    if (cartCountElement) {
-                        cartCountElement.textContent = data.count || '0';
-                    }
-                })
-                .catch(err => console.error('Error updating cart count:', err));
+                    document.getElementById('cart-count').textContent = data.count;
+                });
 
-            // Update wishlist count
-            fetch('{{ route('wishlist.count') }}')
+            fetch('{{ route("wishlist.count") }}')
                 .then(res => res.json())
                 .then(data => {
-                    const wishlistCountElement = document.getElementById('wishlist-count');
-                    if (wishlistCountElement) {
-                        wishlistCountElement.textContent = data.count || '0';
-                    }
-                })
-                .catch(err => console.error('Error updating wishlist count:', err));
-        @endauth
+                    document.getElementById('wishlist-count').textContent = data.count;
+                });
         }
 
-        // Update on page load
-        document.addEventListener('DOMContentLoaded', updateCounts);
+        updateCounts();
+        @endauth
     </script>
-
-    
-    @stack('scripts')
 </body>
-
 </html>
