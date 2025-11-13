@@ -7,305 +7,222 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\DB;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'name',
         'email',
         'password',
-        'role',
         'phone',
-        'address',
+        'role',
+        'is_active',
+        'email_verified_at',
+        'avatar',
         'store_name',
         'store_description',
         'store_logo',
-        'is_active',
     ];
 
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'is_active' => 'boolean',
     ];
 
-    // ============================================
-    // Role Checks
-    // ============================================
-
+    /**
+     * Check if user is super admin
+     */
     public function isSuperAdmin(): bool
     {
         return $this->role === 'super_admin';
     }
 
+    /**
+     * Check if user is admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Check if user is vendor
+     */
     public function isVendor(): bool
     {
         return $this->role === 'vendor';
     }
 
+    /**
+     * Check if user is customer
+     */
     public function isCustomer(): bool
     {
         return $this->role === 'customer';
     }
 
-    // ============================================
-    // Relationships - Products
-    // ============================================
-
+    /**
+     * Products created by this vendor
+     */
     public function products()
     {
         return $this->hasMany(Product::class);
     }
 
-    public function activeProducts()
-    {
-        return $this->hasMany(Product::class)->where('is_active', true);
-    }
-
-    // ============================================
-    // Relationships - Orders
-    // ============================================
-
+    /**
+     * Orders placed by this customer
+     */
     public function orders()
     {
         return $this->hasMany(Order::class);
     }
 
+    /**
+     * Order items that belong to this vendor
+     */
     public function vendorOrderItems()
     {
         return $this->hasMany(OrderItem::class, 'vendor_id');
     }
 
-    // ============================================
-    // Relationships - Cart & Wishlist
-    // ============================================
-
-    public function carts()
+    /**
+     * Get total revenue for this vendor
+     */
+    public function getTotalRevenueAttribute()
     {
-        return $this->hasMany(Cart::class);
+        return $this->vendorOrderItems()
+            ->whereHas('order', function($query) {
+                $query->where('payment_status', 'paid');
+            })
+            ->sum('total');
     }
 
-    public function wishlists()
+    /**
+     * Get count of orders containing this vendor's products
+     */
+    public function getVendorOrdersCountAttribute()
     {
-        return $this->hasMany(Wishlist::class);
+        return $this->vendorOrderItems()
+            ->distinct('order_id')
+            ->count('order_id');
     }
 
-    public function wishlistProducts()
+    /**
+     * Get unique orders that contain this vendor's products
+     */
+    public function getVendorOrders()
     {
-        return $this->belongsToMany(Product::class, 'wishlists');
+        $orderIds = $this->vendorOrderItems()->pluck('order_id')->unique();
+        return Order::whereIn('id', $orderIds);
     }
 
-    // ============================================
-    // Relationships - Reviews
-    // ============================================
-
-    public function reviews()
+    /**
+     * Scope to add vendor revenue
+     */
+    public function scopeWithVendorRevenue($query)
     {
-        return $this->hasMany(Review::class);
+        return $query->addSelect([
+            'vendor_revenue' => OrderItem::selectRaw('COALESCE(SUM(total), 0)')
+                ->whereColumn('vendor_id', 'users.id')
+                ->whereHas('order', function($q) {
+                    $q->where('payment_status', 'paid');
+                })
+        ]);
     }
 
-    // ============================================
-    // Relationships - Addresses
-    // ============================================
-
+    /**
+     * Addresses belonging to this user
+     */
     public function addresses()
     {
         return $this->hasMany(UserAddress::class);
     }
 
-    public function defaultAddress()
+    /**
+     * Reviews written by this user
+     */
+    public function reviews()
     {
-        return $this->hasOne(UserAddress::class)->where('is_default', true);
+        return $this->hasMany(Review::class);
     }
 
-    // ============================================
-    // Relationships - Support
-    // ============================================
+    /**
+     * Cart items for this user
+     */
+    public function cart()
+    {
+        return $this->hasMany(Cart::class);
+    }
 
+    /**
+     * Wishlist items for this user
+     */
+    public function wishlist()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    /**
+     * Notifications for this user
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Support tickets created by this user
+     */
     public function supportTickets()
     {
         return $this->hasMany(SupportTicket::class);
     }
 
-    public function assignedTickets()
+    /**
+     * Refunds requested by this user
+     */
+    public function refunds()
     {
-        return $this->hasMany(SupportTicket::class, 'assigned_to');
+        return $this->hasMany(Refund::class);
     }
 
-    // ============================================
-    // Relationships - Vendor Specific
-    // ============================================
-
-    public function followers()
+    /**
+     * Get the default shipping address
+     */
+    public function defaultShippingAddress()
     {
-        return $this->hasMany(VendorFollower::class, 'vendor_id');
+        return $this->hasOne(UserAddress::class)->where('type', 'shipping')->where('is_default', true);
     }
 
-    public function following()
+    /**
+     * Get the default billing address
+     */
+    public function defaultBillingAddress()
     {
-        return $this->hasMany(VendorFollower::class, 'user_id');
-    }
-
-    public function followingVendors()
-    {
-        return $this->belongsToMany(User::class, 'vendor_followers', 'user_id', 'vendor_id');
-    }
-
-    public function payouts()
-    {
-        return $this->hasMany(VendorPayout::class, 'vendor_id');
-    }
-
-    public function bankAccounts()
-    {
-        return $this->hasMany(VendorBankAccount::class, 'vendor_id');
-    }
-
-    public function primaryBankAccount()
-    {
-        return $this->hasOne(VendorBankAccount::class, 'vendor_id')->where('is_primary', true);
-    }
-
-    // ============================================
-    // Relationships - Messaging
-    // ============================================
-
-    public function customerConversations()
-    {
-        return $this->hasMany(Conversation::class, 'customer_id');
-    }
-
-    public function vendorConversations()
-    {
-        return $this->hasMany(Conversation::class, 'vendor_id');
-    }
-
-    public function messages()
-    {
-        return $this->hasMany(Message::class, 'sender_id');
-    }
-
-    // ============================================
-    // Relationships - Activity
-    // ============================================
-
-    public function activityLogs()
-    {
-        return $this->hasMany(ActivityLog::class);
-    }
-
-    // ============================================
-    // Scopes
-    // ============================================
-
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-
-    public function scopeVendors($query)
-    {
-        return $query->where('role', 'vendor');
-    }
-
-    public function scopeCustomers($query)
-    {
-        return $query->where('role', 'customer');
-    }
-
-    public function scopeAdmins($query)
-    {
-        return $query->where('role', 'super_admin');
-    }
-
-    // ============================================
-    // Accessors
-    // ============================================
-
-    public function getFullAddressAttribute(): ?string
-    {
-        return $this->address;
-    }
-
-    public function getStoreLogoUrlAttribute(): ?string
-    {
-        return $this->store_logo ? asset('storage/' . $this->store_logo) : null;
-    }
-
-    // ============================================
-    // Business Logic Methods
-    // ============================================
-
-    public function getTotalSalesAttribute()
-    {
-        if (!$this->isVendor()) {
-            return 0;
-        }
-
-        return $this->products()->sum('total_sales');
-    }
-
-    public function getTotalRevenueAttribute()
-    {
-        if (!$this->isVendor()) {
-            return 0;
-        }
-
-        return $this->vendorOrderItems()
-            ->whereHas('order', function($q) {
-                $q->where('payment_status', 'paid');
-            })
-            ->sum('total');
-    }
-
-    public function getFollowersCountAttribute()
-    {
-        if (!$this->isVendor()) {
-            return 0;
-        }
-
-        return $this->followers()->count();
-    }
-
-    public function isFollowedBy(User $user): bool
-    {
-        return $this->followers()->where('user_id', $user->id)->exists();
-    }
-
-    public function hasProductInCart(Product $product): bool
-    {
-        return $this->carts()->where('product_id', $product->id)->exists();
-    }
-
-    public function hasProductInWishlist(Product $product): bool
-    {
-        return $this->wishlists()->where('product_id', $product->id)->exists();
-    }
-
-    public function getCartTotalAttribute()
-    {
-        return $this->carts()->sum(\DB::raw('quantity * price'));
-    }
-
-    public function getCartItemsCountAttribute()
-    {
-        return $this->carts()->sum('quantity');
-    }
-
-    public function getPendingOrdersCountAttribute()
-    {
-        return $this->orders()->where('status', 'pending')->count();
-    }
-
-    public function getUnreadNotificationsCountAttribute()
-    {
-        return $this->unreadNotifications()->count();
+        return $this->hasOne(UserAddress::class)->where('type', 'billing')->where('is_default', true);
     }
 }

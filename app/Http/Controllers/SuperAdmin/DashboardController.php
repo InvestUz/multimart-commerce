@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
-use App\Models\Product;
 use App\Models\User;
-use App\Models\Vendor;
+use App\Models\Product;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -14,7 +15,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Summary Statistics
+        // Total Statistics
         $totalRevenue = Order::where('payment_status', 'paid')->sum('total');
         $totalOrders = Order::count();
         $totalProducts = Product::count();
@@ -28,17 +29,16 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
-        // Top Selling Products
-        $topProducts = Product::withCount(['orderItems as total_sold' => function ($query) {
-                $query->select(DB::raw('SUM(quantity)'));
-            }])
-            ->orderBy('total_sold', 'desc')
+        // Top Products
+        $topProducts = Product::withCount('orderItems')
+            ->with(['vendor', 'images'])
+            ->orderBy('order_items_count', 'desc')
             ->take(10)
             ->get();
 
-        // Monthly Revenue Chart Data
+        // Monthly Revenue
         $monthlyRevenue = Order::where('payment_status', 'paid')
-            ->where('created_at', '>=', now()->subMonths(12))
+            ->where('created_at', '>=', now()->subYear())
             ->select(
                 DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
                 DB::raw('SUM(total) as revenue')
@@ -52,10 +52,17 @@ class DashboardController extends Controller
             ->groupBy('status')
             ->get();
 
-        // Top Vendors
+        // Top Vendors - Fixed Query
+        // Calculate total revenue from vendor's order items
         $topVendors = User::where('role', 'vendor')
             ->withCount('products')
-            ->withSum('vendorOrders as total_revenue', 'total')
+            ->addSelect([
+                'total_revenue' => OrderItem::selectRaw('COALESCE(SUM(total), 0)')
+                    ->whereColumn('vendor_id', 'users.id')
+                    ->whereHas('order', function($query) {
+                        $query->where('payment_status', 'paid');
+                    })
+            ])
             ->orderBy('total_revenue', 'desc')
             ->take(5)
             ->get();

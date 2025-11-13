@@ -114,35 +114,6 @@ C:\Users\inves\OneDrive\Ishchi stol\multimart-commerce\app\Http\Controllers\Supe
 : 58
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                 DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
 
                 DB::raw('SUM(total) as revenue')
