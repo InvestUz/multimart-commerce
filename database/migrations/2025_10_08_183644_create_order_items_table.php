@@ -25,6 +25,8 @@ return new class extends Migration
             $table->decimal('total', 12, 2);
             $table->enum('vendor_status', ['pending', 'processing', 'shipped', 'delivered'])->default('pending');
             $table->text('vendor_notes')->nullable();
+            $table->foreignId('payout_id')->nullable()->onDelete('set null');
+
             $table->timestamps();
 
             $table->index('order_id');

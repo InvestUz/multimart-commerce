@@ -22,6 +22,7 @@ class OrderItem extends Model
         'total',
         'vendor_status',
         'vendor_notes',
+        'payout_id',
     ];
 
     protected $casts = [
