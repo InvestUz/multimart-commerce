@@ -242,5 +242,6 @@ function addToCart(productId) {
 }
 @endauth
 </script>
+
 @endpush
 @endsection

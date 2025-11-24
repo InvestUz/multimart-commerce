@@ -93,6 +93,7 @@
         @endforelse
     </div>
 
+
     <!-- Pagination -->
     @if($categories->hasPages())
         <div class="mt-6">
