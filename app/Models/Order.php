@@ -96,6 +96,30 @@ class Order extends Model
         return $this->hasMany(SupportTicket::class);
     }
 
+    /**
+     * Get the coupon used for the order.
+     */
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class);
+    }
+
+    /**
+     * Get the shipping address for the order.
+     */
+    public function shippingAddress()
+    {
+        return $this->belongsTo(UserAddress::class, 'shipping_address_id');
+    }
+
+    /**
+     * Get the billing address for the order.
+     */
+    public function billingAddress()
+    {
+        return $this->belongsTo(UserAddress::class, 'billing_address_id');
+    }
+
     // ============================================
     // Scopes
     // ============================================

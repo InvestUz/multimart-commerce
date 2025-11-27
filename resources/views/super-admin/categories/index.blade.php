@@ -48,7 +48,11 @@
 
                 <!-- Stats -->
                 <div class="flex items-center justify-between mb-4 text-sm text-gray-600">
-                    <span>{{ $category->products_count }} products</span>
+                    <div>
+                        <span>{{ $category->products_count }} products</span>
+                        <span class="ml-2">•</span>
+                        <span class="ml-2">{{ $category->sub_categories_count }} sub-categories</span>
+                    </div>
                     <span class="px-2 py-1 rounded-full text-xs font-medium
                         {{ $category->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                         {{ $category->is_active ? 'Active' : 'Inactive' }}
@@ -57,6 +61,16 @@
 
                 <!-- Actions -->
                 <div class="flex items-center space-x-2">
+                    <a href="{{ route('super-admin.categories.show', $category) }}"
+                       class="flex-1 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100 text-center text-sm font-medium">
+                        View
+                    </a>
+                    <a href="{{ route('super-admin.sub-categories.index') }}?category={{ $category->id }}"
+                       class="flex-1 bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-100 text-center text-sm font-medium">
+                        Sub-Categories
+                    </a>
+                </div>
+                <div class="flex items-center space-x-2 mt-2">
                     <a href="{{ route('super-admin.categories.edit', $category) }}"
                        class="flex-1 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100 text-center text-sm font-medium">
                         Edit

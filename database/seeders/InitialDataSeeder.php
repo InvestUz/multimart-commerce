@@ -34,7 +34,7 @@ class InitialDataSeeder extends Seeder
         // Super Admin
         $superAdmin = User::create([
             'name' => 'Super Admin',
-            'email' => 'admin@marketplace.com',
+            'email' => 'admin@onebazar.com',
             'password' => Hash::make('password'),
             'role' => 'super_admin',
             'phone' => '+998901234567',
@@ -45,7 +45,7 @@ class InitialDataSeeder extends Seeder
         // Vendors
         $vendor1 = User::create([
             'name' => 'Electronics Store',
-            'email' => 'vendor1@marketplace.com',
+            'email' => 'vendor1@onebazar.com',
             'password' => Hash::make('password'),
             'role' => 'vendor',
             'phone' => '+998901234568',
@@ -57,7 +57,7 @@ class InitialDataSeeder extends Seeder
 
         $vendor2 = User::create([
             'name' => 'Fashion Boutique',
-            'email' => 'vendor2@marketplace.com',
+            'email' => 'vendor2@onebazar.com',
             'password' => Hash::make('password'),
             'role' => 'vendor',
             'phone' => '+998901234569',
@@ -82,7 +82,7 @@ class InitialDataSeeder extends Seeder
         // Customers
         $customer1 = User::create([
             'name' => 'John Doe',
-            'email' => 'customer1@example.com',
+            'email' => 'customer@onebazar.com',
             'password' => Hash::make('password'),
             'role' => 'customer',
             'phone' => '+998901234571',
@@ -463,11 +463,11 @@ class InitialDataSeeder extends Seeder
 
         $settings = [
             // General Settings
-            ['key' => 'site_name', 'value' => 'MultiMart Marketplace', 'type' => 'text', 'group' => 'general'],
+            ['key' => 'site_name', 'value' => 'Onebazar', 'type' => 'text', 'group' => 'general'],
             ['key' => 'site_description', 'value' => 'Your one-stop online marketplace', 'type' => 'text', 'group' => 'general'],
             ['key' => 'site_logo', 'value' => 'logo.png', 'type' => 'image', 'group' => 'general'],
             ['key' => 'site_favicon', 'value' => 'favicon.ico', 'type' => 'image', 'group' => 'general'],
-            ['key' => 'contact_email', 'value' => 'support@marketplace.com', 'type' => 'text', 'group' => 'general'],
+            ['key' => 'contact_email', 'value' => 'support@onebazar.com', 'type' => 'text', 'group' => 'general'],
             ['key' => 'contact_phone', 'value' => '+998901234567', 'type' => 'text', 'group' => 'general'],
             ['key' => 'contact_address', 'value' => 'Tashkent, Uzbekistan', 'type' => 'text', 'group' => 'general'],
 
@@ -513,31 +513,31 @@ class InitialDataSeeder extends Seeder
             [
                 'title' => 'About Us',
                 'slug' => 'about-us',
-                'content' => '<h1>About Us</h1><p>Welcome to MultiMart Marketplace, your number one source for all things shopping. We\'re dedicated to giving you the very best products, with a focus on quality, customer service, and uniqueness.</p><p>Founded in 2024, MultiMart has come a long way from its beginnings. When we first started out, our passion for providing the best shopping experience drove us to create this platform, and gave us the impetus to turn hard work and inspiration into a booming online marketplace.</p>',
-                'meta_description' => 'Learn more about MultiMart Marketplace',
+                'content' => '<h1>About Us</h1><p>Welcome to Onebazar, your number one source for all things shopping. We\'re dedicated to giving you the very best products, with a focus on quality, customer service, and uniqueness.</p><p>Founded in 2024, Onebazar has come a long way from its beginnings. When we first started out, our passion for providing the best shopping experience drove us to create this platform, and gave us the impetus to turn hard work and inspiration into a booming online marketplace.</p>',
+                'meta_description' => 'Learn more about Onebazar',
                 'is_active' => true,
                 'order' => 1,
             ],
             [
                 'title' => 'Terms & Conditions',
                 'slug' => 'terms-conditions',
-                'content' => '<h1>Terms & Conditions</h1><p>These terms and conditions outline the rules and regulations for the use of MultiMart Marketplace.</p><h2>License</h2><p>Unless otherwise stated, MultiMart and/or its licensors own the intellectual property rights for all material on MultiMart Marketplace.</p>',
-                'meta_description' => 'Terms and conditions for using MultiMart',
+                'content' => '<h1>Terms & Conditions</h1><p>These terms and conditions outline the rules and regulations for the use of Onebazar.</p><h2>License</h2><p>Unless otherwise stated, Onebazar and/or its licensors own the intellectual property rights for all material on Onebazar.</p>',
+                'meta_description' => 'Terms and conditions for using Onebazar',
                 'is_active' => true,
                 'order' => 2,
             ],
             [
                 'title' => 'Privacy Policy',
                 'slug' => 'privacy-policy',
-                'content' => '<h1>Privacy Policy</h1><p>At MultiMart, accessible from www.multimart.com, one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by MultiMart and how we use it.</p>',
-                'meta_description' => 'Privacy policy of MultiMart Marketplace',
+                'content' => '<h1>Privacy Policy</h1><p>At Onebazar, accessible from www.multimart.com, one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by Onebazar and how we use it.</p>',
+                'meta_description' => 'Privacy policy of Onebazar',
                 'is_active' => true,
                 'order' => 3,
             ],
             [
                 'title' => 'Return & Refund Policy',
                 'slug' => 'return-refund-policy',
-                'content' => '<h1>Return & Refund Policy</h1><p>Thank you for shopping at MultiMart. If you are not entirely satisfied with your purchase, we\'re here to help.</p><h2>Returns</h2><p>You have 30 calendar days to return an item from the date you received it.</p>',
+                'content' => '<h1>Return & Refund Policy</h1><p>Thank you for shopping at Onebazar. If you are not entirely satisfied with your purchase, we\'re here to help.</p><h2>Returns</h2><p>You have 30 calendar days to return an item from the date you received it.</p>',
                 'meta_description' => 'Return and refund policy',
                 'is_active' => true,
                 'order' => 4,
@@ -553,7 +553,7 @@ class InitialDataSeeder extends Seeder
             [
                 'title' => 'Contact Us',
                 'slug' => 'contact',
-                'content' => '<h1>Contact Us</h1><p>Have questions? We\'d love to hear from you.</p><p><strong>Email:</strong> support@marketplace.com</p><p><strong>Phone:</strong> +998901234567</p><p><strong>Address:</strong> Tashkent, Uzbekistan</p>',
+                'content' => '<h1>Contact Us</h1><p>Have questions? We\'d love to hear from you.</p><p><strong>Email:</strong> support@onebazar.com</p><p><strong>Phone:</strong> +998901234567</p><p><strong>Address:</strong> Tashkent, Uzbekistan</p>',
                 'meta_description' => 'Get in touch with us',
                 'is_active' => true,
                 'order' => 6,
@@ -566,10 +566,10 @@ class InitialDataSeeder extends Seeder
 
         echo "\n✅ Initial data seeding completed successfully!\n";
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        echo "Super Admin: admin@marketplace.com / password\n";
-        echo "Vendor 1: vendor1@marketplace.com / password\n";
-        echo "Vendor 2: vendor2@marketplace.com / password\n";
-        echo "Customer: customer1@example.com / password\n";
+        echo "Super Admin: admin@onebazar.com / password\n";
+        echo "Vendor 1: vendor1@onebazar.com / password\n";
+        echo "Vendor 2: vendor2@onebazar.com / password\n";
+        echo "Customer: customer@onebazar.com / password\n";
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
     }
 }

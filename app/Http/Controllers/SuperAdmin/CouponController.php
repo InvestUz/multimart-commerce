@@ -34,6 +34,10 @@ class CouponController extends Controller
         ]);
 
         $validated['code'] = strtoupper($validated['code']);
+        // Map form fields to model fields
+        $validated['starts_at'] = $validated['start_date'];
+        $validated['expires_at'] = $validated['end_date'];
+        unset($validated['start_date'], $validated['end_date']);
 
         Coupon::create($validated);
 
@@ -67,6 +71,10 @@ class CouponController extends Controller
         ]);
 
         $validated['code'] = strtoupper($validated['code']);
+        // Map form fields to model fields
+        $validated['starts_at'] = $validated['start_date'];
+        $validated['expires_at'] = $validated['end_date'];
+        unset($validated['start_date'], $validated['end_date']);
 
         $coupon->update($validated);
 

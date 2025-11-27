@@ -9,6 +9,8 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Vendor;
 use App\Models\SubCategory;
+use App\Models\Product;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -63,6 +65,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{cart}', [CartController::class, 'destroy'])->name('destroy');
         Route::get('/count', [CartController::class, 'count'])->name('count');
         Route::post('/clear', [CartController::class, 'clear'])->name('clear');
+        Route::post('/apply-coupon', [CartController::class, 'applyCoupon'])->name('apply-coupon');
     });
 
     // Wishlist Routes
@@ -95,8 +98,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('account')->name('account.')->group(function () {
         Route::get('/profile', [HomeController::class, 'profile'])->name('profile');
         Route::put('/profile', [HomeController::class, 'updateProfile'])->name('profile.update');
+        Route::put('/password', [HomeController::class, 'updatePassword'])->name('password.update');
         Route::get('/addresses', [HomeController::class, 'addresses'])->name('addresses');
         Route::post('/addresses', [HomeController::class, 'storeAddress'])->name('addresses.store');
+        Route::get('/addresses/{address}/edit', [HomeController::class, 'editAddress'])->name('addresses.edit');
         Route::put('/addresses/{address}', [HomeController::class, 'updateAddress'])->name('addresses.update');
         Route::delete('/addresses/{address}', [HomeController::class, 'deleteAddress'])->name('addresses.destroy');
     });
@@ -118,8 +123,7 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'super_a
 
     // Sub-Categories Management
     Route::resource('sub-categories', SuperAdmin\SubCategoryController::class);
-    Route::get('/sub-categories/by-category/{categoryId}', [SuperAdmin\SubCategoryController::class, 'getByCategory'])
-        ->name('sub-categories.by-category');
+    Route::get('/sub-categories/category/{category}', [SuperAdmin\SubCategoryController::class, 'getByCategory'])->name('super-admin.sub-categories.by-category');
 
     // Brands Management
     Route::resource('brands', SuperAdmin\BrandController::class);
@@ -127,6 +131,10 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'super_a
     // Vendors Management
     Route::prefix('vendors')->name('vendors.')->group(function () {
         Route::get('/', [SuperAdmin\VendorController::class, 'index'])->name('index');
+        Route::get('/create', [SuperAdmin\VendorController::class, 'create'])->name('create');
+        Route::post('/', [SuperAdmin\VendorController::class, 'store'])->name('store');
+        Route::get('/{vendor}/edit', [SuperAdmin\VendorController::class, 'edit'])->name('edit');
+        Route::put('/{vendor}', [SuperAdmin\VendorController::class, 'update'])->name('update');
         Route::get('/{vendor}', [SuperAdmin\VendorController::class, 'show'])->name('show');
         Route::post('/{vendor}/toggle-status', [SuperAdmin\VendorController::class, 'toggleStatus'])->name('toggle-status');
         Route::post('/{vendor}/approve', [SuperAdmin\VendorController::class, 'approve'])->name('approve');
@@ -136,9 +144,14 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'super_a
     // Products Management
     Route::prefix('products')->name('products.')->group(function () {
         Route::get('/', [SuperAdmin\ProductController::class, 'index'])->name('index');
+        Route::get('/create', [SuperAdmin\ProductController::class, 'create'])->name('create');
+        Route::post('/', [SuperAdmin\ProductController::class, 'store'])->name('store');
+        Route::get('/{product}/edit', [SuperAdmin\ProductController::class, 'edit'])->name('edit');
+        Route::put('/{product}', [SuperAdmin\ProductController::class, 'update'])->name('update');
         Route::get('/{product}', [SuperAdmin\ProductController::class, 'show'])->name('show');
         Route::post('/{product}/toggle-status', [SuperAdmin\ProductController::class, 'toggleStatus'])->name('toggle-status');
         Route::post('/{product}/toggle-featured', [SuperAdmin\ProductController::class, 'toggleFeatured'])->name('toggle-featured');
+        Route::delete('/{product}/images/{image}', [SuperAdmin\ProductController::class, 'deleteImage'])->name('products.delete-image');
         Route::delete('/{product}', [SuperAdmin\ProductController::class, 'destroy'])->name('destroy');
     });
 
@@ -149,6 +162,10 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'super_a
         Route::post('/{order}/update-status', [SuperAdmin\OrderController::class, 'updateStatus'])->name('update-status');
         Route::post('/{order}/update-payment', [SuperAdmin\OrderController::class, 'updatePaymentStatus'])->name('update-payment');
     });
+
+    // Payment Methods Management
+    Route::resource('payment-methods', SuperAdmin\PaymentMethodController::class);
+    Route::post('/payment-methods/{paymentMethod}/toggle-status', [SuperAdmin\PaymentMethodController::class, 'toggleStatus'])->name('payment-methods.toggle-status');
 
     // Reviews Management
     Route::prefix('reviews')->name('reviews.')->group(function () {
@@ -219,6 +236,10 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'super_a
     // Taxes
     Route::resource('taxes', SuperAdmin\TaxController::class);
 
+    // Sub-Categories Management
+    Route::resource('sub-categories', SuperAdmin\SubCategoryController::class);
+    Route::get('/sub-categories/category/{category}', [SuperAdmin\SubCategoryController::class, 'getByCategory'])->name('sub-categories.by-category');
+
     // Users Management
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [SuperAdmin\UserController::class, 'index'])->name('index');
@@ -237,6 +258,12 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'super_a
         Route::get('/vendors', [SuperAdmin\ReportController::class, 'vendors'])->name('vendors');
         Route::get('/customers', [SuperAdmin\ReportController::class, 'customers'])->name('customers');
     });
+
+    // Notifications
+    Route::get('/notifications', [SuperAdmin\DashboardController::class, 'notifications'])->name('notifications');
+    Route::get('/notifications/view', function () {
+        return view('super-admin.notifications');
+    })->name('notifications.view');
 });
 
 /*
@@ -313,6 +340,92 @@ Route::prefix('vendor')->name('vendor.')->middleware(['auth', 'vendor'])->group(
     });
 });
 
+// Test route for debugging
+Route::get('/test-cart', function () {
+    return view('test-cart');
+})->name('test.cart');
+
+Route::post('/test-cart-add', function (Request $request) {
+    $request->validate([
+        'product_id' => 'required|exists:products,id',
+        'quantity' => 'required|integer|min:1',
+    ]);
+
+    $product = Product::findOrFail($request->product_id);
+
+    // Simple test - just return success
+    return response()->json([
+        'success' => true,
+        'message' => 'Test successful! Product would be added to cart.',
+        'cart_count' => 1
+    ]);
+})->name('test.cart.add');
+
+// Test route for debugging addresses
+Route::get('/test-address', function () {
+    return view('test-address');
+})->name('test.address');
+
+Route::post('/test-address-create', function (Request $request) {
+    try {
+        $validated = $request->validate([
+            'label' => 'required|string|max:50',
+            'full_name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'address_line1' => 'required|string|max:255',
+            'address_line2' => 'nullable|string|max:255',
+            'city' => 'required|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'postal_code' => 'required|string|max:20',
+            'country' => 'required|string|max:100',
+            'is_default' => 'boolean'
+        ]);
+
+        $validated['user_id'] = auth()->id();
+        // Properly handle the checkbox value - if not present, set to false
+        $validated['is_default'] = $request->has('is_default') ? (bool) $request->is_default : false;
+
+        // If this is set as default, unset other defaults
+        if ($validated['is_default']) {
+            \App\Models\UserAddress::where('user_id', auth()->id())->update(['is_default' => false]);
+        }
+
+        $address = \App\Models\UserAddress::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Address created successfully!',
+            'address' => $address
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to create address: ' . $e->getMessage()
+        ], 422);
+    }
+})->name('test.address.create');
+
+// Test route for notifications
+Route::get('/test-notification', function () {
+    // Get the super admin user
+    $admin = \App\Models\User::where('role', 'super_admin')->first();
+    
+    if ($admin) {
+        // Create a test notification
+        $admin->notify(new \App\Notifications\NewOrderPlaced(
+            \App\Models\Order::first() ?? new \App\Models\Order([
+                'order_number' => 'TEST-001',
+                'total' => 100.00,
+                'customer_name' => 'Test Customer'
+            ])
+        ));
+        
+        return 'Test notification sent to admin: ' . $admin->name;
+    }
+    
+    return 'No super admin found';
+})->name('test.notification');
+
 /*
 |--------------------------------------------------------------------------
 | Common Authenticated Routes (All Roles)
@@ -320,6 +433,18 @@ Route::prefix('vendor')->name('vendor.')->middleware(['auth', 'vendor'])->group(
 */
 
 Route::middleware(['auth'])->group(function () {
+    // Account Routes
+    Route::prefix('account')->name('account.')->group(function () {
+        Route::get('/profile', [HomeController::class, 'profile'])->name('profile');
+        Route::put('/profile', [HomeController::class, 'updateProfile'])->name('profile.update');
+        Route::put('/password', [HomeController::class, 'updatePassword'])->name('password.update');
+    });
+
+    // Orders Routes
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [OrderController::class, 'index'])->name('index');
+        Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+    });
 
     // Notifications
     Route::prefix('notifications')->name('notifications.')->group(function () {
@@ -353,9 +478,10 @@ Route::middleware(['auth'])->group(function () {
 */
 
 Route::get('/dashboard', function () {
-    if (auth()->user()->isSuperAdmin()) {
+    $user = auth()->user();
+    if ($user && $user->role === 'super_admin') {
         return redirect()->route('super-admin.dashboard');
-    } elseif (auth()->user()->isVendor()) {
+    } elseif ($user && $user->role === 'vendor') {
         return redirect()->route('vendor.dashboard');
     } else {
         return redirect()->route('home');
@@ -378,3 +504,15 @@ Route::get('/newsletter/unsubscribe/{token}', [HomeController::class, 'newslette
 */
 
 Route::get('/page/{slug}', [HomeController::class, 'page'])->name('page.show');
+
+/*
+|--------------------------------------------------------------------------
+| Wishlist Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist', [WishlistController::class, 'store'])->name('wishlist.store');
+    Route::delete('/wishlist', [WishlistController::class, 'destroy'])->name('wishlist.destroy');
+});

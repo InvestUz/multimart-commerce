@@ -10,6 +10,12 @@
             <h1 class="text-3xl font-bold text-gray-900">Products</h1>
             <p class="text-gray-600 mt-1">Manage all products from all vendors</p>
         </div>
+        <div>
+            <a href="{{ route('super-admin.products.create') }}" 
+               class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                Create Product
+            </a>
+        </div>
     </div>
 
     <!-- Filters -->
@@ -107,10 +113,14 @@
                                 </button>
                             </form>
                         </td>
-                        <td class="px-6 py-4 text-sm">
+                        <td class="px-6 py-4 text-sm space-x-2">
                             <a href="{{ route('super-admin.products.show', $product) }}"
                                class="text-blue-600 hover:text-blue-800">
                                 View
+                            </a>
+                            <a href="{{ route('super-admin.products.edit', $product) }}"
+                               class="text-green-600 hover:text-green-800">
+                                Edit
                             </a>
                         </td>
                     </tr>

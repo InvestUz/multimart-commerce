@@ -174,3 +174,14 @@ C:\Users\inves\OneDrive\Ishchi stol\multimart-commerce\app\Http\Controllers\Supe
 
             'monthlyRevenue',
 ```
+
+
+composer install
+npm install
+php artisan storage:link
+php artisan key:generate
+npm run dev
+php artisan serve
+
+Электрон почта: admin@marketplace.com
+Пароль: password

@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Banner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class BannerController extends Controller
 {
@@ -28,11 +29,19 @@ class BannerController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('banners', 'public');
+            $validated['image_path'] = $request->file('image')->store('banners', 'public');
         }
 
+        // Set default order if not provided
+        if (!isset($validated['order'])) {
+            $validated['order'] = Banner::max('order') + 1;
+        }
+
+        // Handle checkbox value
+        $validated['is_active'] = $request->has('is_active');
+
         Banner::create($validated);
-        return redirect()->route('super-admin.banners.index')->with('success', 'Banner created!');
+        return redirect()->route('super-admin.banners.index')->with('success', 'Banner created successfully!');
     }
 
     public function edit(Banner $banner) {
@@ -51,17 +60,33 @@ class BannerController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            if ($banner->image) Storage::disk('public')->delete($banner->image);
-            $validated['image'] = $request->file('image')->store('banners', 'public');
+            // Delete old image if exists
+            if ($banner->image_path) {
+                Storage::disk('public')->delete($banner->image_path);
+            }
+            $validated['image_path'] = $request->file('image')->store('banners', 'public');
+        } else {
+            // Keep the existing image path
+            unset($validated['image']);
         }
 
+        // Set default order if not provided
+        if (!isset($validated['order'])) {
+            $validated['order'] = $banner->order;
+        }
+
+        // Handle checkbox value
+        $validated['is_active'] = $request->has('is_active');
+
         $banner->update($validated);
-        return redirect()->route('super-admin.banners.index')->with('success', 'Banner updated!');
+        return redirect()->route('super-admin.banners.index')->with('success', 'Banner updated successfully!');
     }
 
     public function destroy(Banner $banner) {
-        if ($banner->image) Storage::disk('public')->delete($banner->image);
+        if ($banner->image_path) {
+            Storage::disk('public')->delete($banner->image_path);
+        }
         $banner->delete();
-        return redirect()->route('super-admin.banners.index')->with('success', 'Banner deleted!');
+        return redirect()->route('super-admin.banners.index')->with('success', 'Banner deleted successfully!');
     }
 }

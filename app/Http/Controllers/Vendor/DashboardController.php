@@ -48,6 +48,8 @@ class DashboardController extends Controller
         // Recent Orders
         $recentOrders = $vendor->vendorOrderItems()
             ->with(['order.user', 'product'])
+            ->whereHas('order')
+            ->whereHas('product')
             ->latest()
             ->take(10)
             ->get();

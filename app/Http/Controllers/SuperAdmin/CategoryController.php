@@ -55,7 +55,9 @@ class CategoryController extends Controller
 
     public function show(Category $category)
     {
-        $category->load(['subCategories', 'products']);
+        $category->load(['subCategories' => function($query) {
+            $query->withCount('products');
+        }, 'products']);
         return view('super-admin.categories.show', compact('category'));
     }
 

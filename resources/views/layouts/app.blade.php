@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', config('app.name', 'Multi-Vendor E-Commerce'))</title>
+    <title>@yield('title', config('app.name', 'Onebazar'))</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -45,7 +45,7 @@
 
     @stack('styles')
 </head>
-<body class="font-sans antialiased">
+<body class="font-sans antialiased" x-data="{ mobileMenuOpen: false }">
     <div class="min-h-screen bg-gray-100">
         <!-- Navigation -->
         <nav class="bg-white border-b border-gray-200">
@@ -55,68 +55,78 @@
                         <!-- Logo -->
                         <div class="flex-shrink-0 flex items-center">
                             <a href="{{ route('home') }}" class="text-xl font-bold text-gray-800">
-                                {{ config('app.name', 'E-Commerce') }}
+                                {{ config('app.name', 'Onebazar') }}
                             </a>
                         </div>
 
                         <!-- Navigation Links -->
                         <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                            <a href="{{ route('home') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            <a href="{{ route('home') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('home') ? 'border-gold-500 text-gold-600' : 'border-transparent text-gray-500' }} hover:text-gold-600 hover:border-gold-300 text-sm font-medium">
                                 Home
                             </a>
-                            <a href="{{ route('brands.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            <a href="{{ route('brands.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('brands.*') ? 'border-gold-500 text-gold-600' : 'border-transparent text-gray-500' }} hover:text-gold-600 hover:border-gold-300 text-sm font-medium">
                                 Brands
                             </a>
-                            <a href="{{ route('about') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            <a href="{{ route('about') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('about') ? 'border-gold-500 text-gold-600' : 'border-transparent text-gray-500' }} hover:text-gold-600 hover:border-gold-300 text-sm font-medium">
                                 About
                             </a>
-                            <a href="{{ route('contact') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            <a href="{{ route('contact') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('contact') ? 'border-gold-500 text-gold-600' : 'border-transparent text-gray-500' }} hover:text-gold-600 hover:border-gold-300 text-sm font-medium">
                                 Contact
                             </a>
                         </div>
                     </div>
 
+                    <!-- Mobile menu button -->
+                    <div class="flex items-center sm:hidden">
+                        <button @click="mobileMenuOpen = !mobileMenuOpen" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-gold-500">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                    </div>
+
                     <!-- Right Side -->
                     <div class="hidden sm:flex sm:items-center sm:ml-6 space-x-4">
                         <!-- Search -->
-                        <form action="{{ route('search') }}" method="GET" class="flex">
-                            <input type="text" name="q" placeholder="Search products..."
-                                   class="rounded-l-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" />
-                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-r-md hover:bg-indigo-700">
-                                <i class="fas fa-search"></i>
-                            </button>
+                        <form action="{{ route('search') }}" method="GET" class="flex items-center">
+                            <div class="relative">
+                                <input type="text" name="q" placeholder="Search products..."
+                                       class="w-64 rounded-full border-gray-300 focus:border-gold-500 focus:ring-gold-500 pl-4 pr-10 py-2 text-sm" 
+                                       value="{{ request()->get('q') }}" />
+                                <button type="submit" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gold-600">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
                         </form>
 
                         @auth
                             <!-- Wishlist -->
-                            <a href="{{ route('wishlist.index') }}" class="relative text-gray-500 hover:text-gray-700">
+                            <a href="{{ route('wishlist.index') }}" class="relative text-gray-500 hover:text-gold-600 p-2 rounded-full hover:bg-gray-100">
                                 <i class="fas fa-heart text-xl"></i>
-                                <span id="wishlist-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                <span id="wishlist-count" class="absolute -top-1 -right-1 bg-gold-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center text-[10px]">
                                     0
                                 </span>
                             </a>
 
                             <!-- Cart -->
-                            <a href="{{ route('cart.index') }}" class="relative text-gray-500 hover:text-gray-700">
+                            <a href="{{ route('cart.index') }}" class="relative text-gray-500 hover:text-gold-600 p-2 rounded-full hover:bg-gray-100">
                                 <i class="fas fa-shopping-cart text-xl"></i>
-                                <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                <span id="cart-count" class="absolute -top-1 -right-1 bg-gold-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center text-[10px]">
                                     0
                                 </span>
                             </a>
 
                             <!-- Profile Dropdown -->
                             <div class="relative" x-data="{ open: false }">
-                                <button @click="open = !open" class="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700">
+                                <button @click="open = !open" class="flex items-center text-sm font-medium text-gray-500 hover:text-gold-600 p-2 rounded-full hover:bg-gray-100">
                                     <span>{{ Auth::user()->name }}</span>
-                                    <i class="fas fa-chevron-down ml-1"></i>
+                                    <i class="fas fa-chevron-down ml-1 text-xs"></i>
                                 </button>
 
                                 <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                                    @if(Auth::user()->isSuperAdmin())
+                                    @if(Auth::user()->role === 'super_admin')
                                         <a href="{{ route('super-admin.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             Admin Dashboard
                                         </a>
-                                    @elseif(Auth::user()->isVendor())
+                                    @elseif(Auth::user()->role === 'vendor')
                                         <a href="{{ route('vendor.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             Vendor Dashboard
                                         </a>
@@ -137,18 +147,72 @@
                                 </div>
                             </div>
                         @else
-                            <a href="{{ route('login') }}" class="text-gray-500 hover:text-gray-700">Login</a>
-                            <a href="{{ route('register') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                            <a href="{{ route('login') }}" class="text-gray-500 hover:text-gold-600 px-3 py-2 rounded-md text-sm font-medium border border-gray-300 hover:border-gold-300">Login</a>
+                            <a href="{{ route('register') }}" class="px-4 py-2 bg-gold-600 text-white rounded-full hover:bg-gold-700 text-sm font-medium">
                                 Register
                             </a>
                         @endauth
                     </div>
                 </div>
             </div>
+
+            <!-- Mobile menu -->
+            <div x-show="mobileMenuOpen" class="sm:hidden" x-cloak>
+                <div class="pt-2 pb-3 space-y-1">
+                    <a href="{{ route('home') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('home') ? 'border-gold-500 text-gold-600 bg-gold-50' : 'border-transparent text-gray-600' }} hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 text-base font-medium">Home</a>
+                    <a href="{{ route('brands.index') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('brands.*') ? 'border-gold-500 text-gold-600 bg-gold-50' : 'border-transparent text-gray-600' }} hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 text-base font-medium">Brands</a>
+                    <a href="{{ route('about') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('about') ? 'border-gold-500 text-gold-600 bg-gold-50' : 'border-transparent text-gray-600' }} hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 text-base font-medium">About</a>
+                    <a href="{{ route('contact') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('contact') ? 'border-gold-500 text-gold-600 bg-gold-50' : 'border-transparent text-gray-600' }} hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 text-base font-medium">Contact</a>
+                    
+                    <!-- Mobile Search -->
+                    <div class="px-4 py-2">
+                        <form action="{{ route('search') }}" method="GET" class="flex items-center">
+                            <div class="relative w-full">
+                                <input type="text" name="q" placeholder="Search products..."
+                                       class="w-full rounded-full border-gray-300 focus:border-gold-500 focus:ring-gold-500 pl-4 pr-10 py-2 text-sm" 
+                                       value="{{ request()->get('q') }}" />
+                                <button type="submit" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gold-600">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    @auth
+                        <div class="border-t border-gray-200 pt-4 pb-3">
+                            <div class="flex items-center px-4">
+                                <div class="flex-shrink-0">
+                                    <span class="text-gray-800 font-medium">{{ Auth::user()->name }}</span>
+                                </div>
+                            </div>
+                            <div class="mt-3 space-y-1">
+                                @if(Auth::user()->role === 'super_admin')
+                                    <a href="{{ route('super-admin.dashboard') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Admin Dashboard</a>
+                                @elseif(Auth::user()->role === 'vendor')
+                                    <a href="{{ route('vendor.dashboard') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Vendor Dashboard</a>
+                                @endif
+                                <a href="{{ route('orders.index') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">My Orders</a>
+                                <a href="{{ route('account.profile') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Profile</a>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Logout</button>
+                                </form>
+                            </div>
+                        </div>
+                    @else
+                        <div class="border-t border-gray-200 pt-4 pb-3">
+                            <div class="space-y-1 px-4">
+                                <a href="{{ route('login') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md border border-gray-300 hover:border-gold-300 text-center">Login</a>
+                                <a href="{{ route('register') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md bg-gold-600 text-white text-center hover:bg-gold-700">Register</a>
+                            </div>
+                        </div>
+                    @endauth
+                </div>
+            </div>
         </nav>
 
         <!-- Page Content -->
-        <main>
+        <main class="mt-6">
             @if (session('success'))
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
                     <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
@@ -196,7 +260,7 @@
                             @csrf
                             <input type="email" name="email" placeholder="Your email"
                                    class="w-full px-3 py-2 text-gray-900 rounded-md" required />
-                            <button type="submit" class="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                            <button type="submit" class="mt-2 w-full px-4 py-2 bg-gold-600 text-white rounded-md hover:bg-gold-700">
                                 Subscribe
                             </button>
                         </form>

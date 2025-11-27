@@ -10,6 +10,12 @@
             <h1 class="text-3xl font-bold text-gray-900">Vendors</h1>
             <p class="text-gray-600 mt-1">Manage all vendors</p>
         </div>
+        <div>
+            <a href="{{ route('super-admin.vendors.create') }}" 
+               class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                Create Vendor
+            </a>
+        </div>
     </div>
 
     <!-- Filters -->

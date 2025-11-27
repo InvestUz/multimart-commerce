@@ -20,7 +20,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="flex items-center">
                 @if($category->image)
-                <img src="{{ Storage::url($category->image) }}" alt="{{ $category->name }}" class="w-20 h-20 rounded-lg mr-4 object-cover">
+                <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}" class="w-20 h-20 rounded-lg mr-4 object-cover">
                 @endif
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">{{ $category->name }}</h1>
@@ -127,7 +127,7 @@
                     <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition group">
                         <a href="{{ route('product.show', $product->slug) }}" class="block relative">
                             @if($product->images->first())
-                            <img src="{{ Storage::url($product->images->first()->image_path) }}"
+                            <img src="{{ asset('storage/' . $product->images->first()->image_path) }}"
                                  alt="{{ $product->name }}"
                                  class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
                             @else

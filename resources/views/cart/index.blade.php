@@ -16,7 +16,7 @@
                     <!-- Product Image -->
                     <a href="{{ route('product.show', $item->product->slug) }}" class="flex-shrink-0">
                         @if($item->product->images->first())
-                        <img src="{{ Storage::url($item->product->images->first()->image_path) }}"
+                        <img src="{{ asset('storage/' . $item->product->images->first()->image_path) }}"
                              alt="{{ $item->product->name }}"
                              class="w-24 h-24 object-cover rounded-lg">
                         @else

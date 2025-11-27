@@ -30,6 +30,26 @@
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
 
                     <div class="space-y-4">
+                        <!-- Vendor -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Vendor <span class="text-red-500">*</span>
+                            </label>
+                            <select name="vendor_id" 
+                                    required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('vendor_id') border-red-500 @enderror">
+                                <option value="">Select a vendor</option>
+                                @foreach($vendors as $vendor)
+                                    <option value="{{ $vendor->id }}" {{ old('vendor_id') == $vendor->id ? 'selected' : '' }}>
+                                        {{ $vendor->name }} ({{ $vendor->store_name }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('vendor_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <!-- Product Name -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -92,7 +112,6 @@
                                name="images[]"
                                multiple
                                accept="image/*"
-                               required
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('images') border-red-500 @enderror">
                         @error('images')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -208,106 +227,25 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Product Attributes (Optional) -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Product Attributes (Optional)</h3>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Sizes -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Sizes (comma-separated)
-                            </label>
-                            <input type="text"
-                                   name="sizes"
-                                   value="{{ old('sizes') }}"
-                                   placeholder="e.g., S, M, L, XL"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            <p class="mt-1 text-sm text-gray-500">Separate sizes with commas</p>
-                        </div>
-
-                        <!-- Colors -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Colors (comma-separated)
-                            </label>
-                            <input type="text"
-                                   name="colors"
-                                   value="{{ old('colors') }}"
-                                   placeholder="e.g., Red, Blue, Green"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            <p class="mt-1 text-sm text-gray-500">Separate colors with commas</p>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Sidebar -->
-            <div class="lg:col-span-1 space-y-6">
-                <!-- Status -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Status</h3>
-
-                    <div class="space-y-3">
-                        <div class="flex items-center">
-                            <input type="checkbox"
-                                   name="is_active"
-                                   value="1"
-                                   {{ old('is_active', true) ? 'checked' : '' }}
-                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                            <label class="ml-2 block text-sm text-gray-700">
-                                Active (visible on website)
-                            </label>
-                        </div>
-
-                        <div class="flex items-center">
-                            <input type="checkbox"
-                                   name="is_featured"
-                                   value="1"
-                                   {{ old('is_featured', false) ? 'checked' : '' }}
-                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                            <label class="ml-2 block text-sm text-gray-700">
-                                Featured (show on homepage)
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
+            <div class="space-y-6">
                 <!-- Organization -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Organization</h3>
 
                     <div class="space-y-4">
-                        <!-- Vendor -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Vendor <span class="text-red-500">*</span>
-                            </label>
-                            <select name="user_id"
-                                    required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('user_id') border-red-500 @enderror">
-                                <option value="">Select Vendor</option>
-                                @foreach($vendors as $vendor)
-                                    <option value="{{ $vendor->id }}" {{ old('user_id') == $vendor->id ? 'selected' : '' }}>
-                                        {{ $vendor->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('user_id')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
                         <!-- Category -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Category <span class="text-red-500">*</span>
                             </label>
-                            <select name="category_id"
+                            <select name="category_id" 
+                                    id="category_id"
                                     required
                                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('category_id') border-red-500 @enderror">
-                                <option value="">Select Category</option>
+                                <option value="">Select a category</option>
                                 @foreach($categories as $category)
                                     <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
                                         {{ $category->name }}
@@ -319,14 +257,29 @@
                             @enderror
                         </div>
 
+                        <!-- Sub Category -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Sub Category
+                            </label>
+                            <select name="sub_category_id" 
+                                    id="sub_category_id"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('sub_category_id') border-red-500 @enderror">
+                                <option value="">Select a sub-category</option>
+                            </select>
+                            @error('sub_category_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <!-- Brand -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Brand (Optional)
+                                Brand
                             </label>
-                            <select name="brand_id"
+                            <select name="brand_id" 
                                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('brand_id') border-red-500 @enderror">
-                                <option value="">No Brand</option>
+                                <option value="">Select a brand</option>
                                 @foreach($brands as $brand)
                                     <option value="{{ $brand->id }}" {{ old('brand_id') == $brand->id ? 'selected' : '' }}>
                                         {{ $brand->name }}
@@ -337,20 +290,95 @@
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Condition -->
+                <!-- Visibility -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Visibility</h3>
+
+                    <div class="space-y-4">
+                        <!-- Status -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Condition <span class="text-red-500">*</span>
+                                Status
                             </label>
-                            <select name="condition"
-                                    required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('condition') border-red-500 @enderror">
-                                <option value="new" {{ old('condition', 'new') == 'new' ? 'selected' : '' }}>New</option>
-                                <option value="used" {{ old('condition') == 'used' ? 'selected' : '' }}>Used</option>
-                                <option value="refurbished" {{ old('condition') == 'refurbished' ? 'selected' : '' }}>Refurbished</option>
-                            </select>
-                            @error('condition')
+                            <div class="flex items-center">
+                                <input type="checkbox" 
+                                       name="is_active" 
+                                       id="is_active"
+                                       {{ old('is_active', true) ? 'checked' : '' }}
+                                       class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <label for="is_active" class="ml-2 block text-sm text-gray-900">
+                                    Active
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Featured -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Featured
+                            </label>
+                            <div class="flex items-center">
+                                <input type="checkbox" 
+                                       name="is_featured" 
+                                       id="is_featured"
+                                       {{ old('is_featured') ? 'checked' : '' }}
+                                       class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <label for="is_featured" class="ml-2 block text-sm text-gray-900">
+                                    Featured Product
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEO -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">SEO</h3>
+
+                    <div class="space-y-4">
+                        <!-- Meta Title -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Meta Title
+                            </label>
+                            <input type="text"
+                                   name="meta_title"
+                                   value="{{ old('meta_title') }}"
+                                   placeholder="Product meta title"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('meta_title') border-red-500 @enderror">
+                            @error('meta_title')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Meta Description -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Meta Description
+                            </label>
+                            <textarea name="meta_description"
+                                      rows="3"
+                                      placeholder="Product meta description"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('meta_description') border-red-500 @enderror">{{ old('meta_description') }}</textarea>
+                            @error('meta_description')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Meta Keywords -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Meta Keywords
+                            </label>
+                            <input type="text"
+                                   name="meta_keywords"
+                                   value="{{ old('meta_keywords') }}"
+                                   placeholder="keyword1, keyword2, keyword3"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('meta_keywords') border-red-500 @enderror">
+                            @error('meta_keywords')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -360,29 +388,76 @@
         </div>
 
         <!-- Submit Button -->
-        <div class="flex items-center justify-end space-x-4 mt-6">
-            <a href="{{ route('super-admin.products.index') }}"
-               class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                Cancel
-            </a>
-            <button type="submit"
-                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        <div class="mt-6">
+            <button type="submit" 
+                    class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 Create Product
             </button>
         </div>
     </form>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('category_id');
+    const subCategorySelect = document.getElementById('sub_category_id');
+    
+    categorySelect.addEventListener('change', function() {
+        const categoryId = this.value;
+        
+        // Clear sub-category options
+        subCategorySelect.innerHTML = '<option value="">Select a sub-category</option>';
+        
+        if (categoryId) {
+            // Fetch sub-categories for selected category
+            fetch(`/super-admin/sub-categories/by-category/${categoryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(subCategory => {
+                        const option = document.createElement('option');
+                        option.value = subCategory.id;
+                        option.textContent = subCategory.name;
+                        subCategorySelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+});
+</script>
+@endsection
+
 @push('scripts')
 <script>
-    // Auto-generate slug from name
-    document.querySelector('input[name="name"]').addEventListener('input', function(e) {
-        const slug = e.target.value
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/(^-|-$)/g, '');
-        document.querySelector('input[name="slug"]').value = slug;
-    });
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('category_id');
+    const subCategorySelect = document.getElementById('sub_category_id');
+    
+    if (categorySelect && subCategorySelect) {
+        categorySelect.addEventListener('change', function() {
+            const categoryId = this.value;
+            
+            // Clear sub-category options
+            subCategorySelect.innerHTML = '<option value="">Select a sub-category</option>';
+            
+            if (categoryId) {
+                // Fetch sub-categories via AJAX
+                fetch(`/super-admin/sub-categories/category/${categoryId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(subCategory => {
+                            const option = document.createElement('option');
+                            option.value = subCategory.id;
+                            option.textContent = subCategory.name;
+                            subCategorySelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching sub-categories:', error);
+                    });
+            }
+        });
+    }
+});
 </script>
 @endpush
-@endsection

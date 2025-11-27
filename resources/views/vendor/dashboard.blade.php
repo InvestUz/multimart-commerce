@@ -76,9 +76,9 @@
                     @foreach($recentOrders as $orderItem)
                         <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                             <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">{{ $orderItem->order->order_number }}</p>
-                                <p class="text-xs text-gray-500">{{ $orderItem->product->name }}</p>
-                                <p class="text-xs text-gray-500">Customer: {{ $orderItem->order->user->name }}</p>
+                                <p class="text-sm font-medium text-gray-900">{{ $orderItem->order->order_number ?? 'N/A' }}</p>
+                                <p class="text-xs text-gray-500">{{ $orderItem->product->name ?? 'Product deleted' }}</p>
+                                <p class="text-xs text-gray-500">Customer: {{ $orderItem->order->user->name ?? 'N/A' }}</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-sm font-semibold text-gray-900">${{ number_format($orderItem->total, 2) }}</p>

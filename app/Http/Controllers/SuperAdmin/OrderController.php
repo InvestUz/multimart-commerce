@@ -42,8 +42,6 @@ class OrderController extends Controller
             'user',
             'items.product.images',
             'items.vendor',
-            'shippingAddress',
-            'billingAddress',
             'coupon'
         ]);
 

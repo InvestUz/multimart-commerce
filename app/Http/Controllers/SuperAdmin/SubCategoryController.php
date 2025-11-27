@@ -10,12 +10,23 @@ use Illuminate\Support\Str;
 
 class SubCategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $subCategories = SubCategory::with('category')
+        $query = SubCategory::with('category')
             ->withCount('products')
-            ->orderBy('order')
-            ->paginate(20);
+            ->orderBy('order');
+
+        // Search filter
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+
+        $subCategories = $query->paginate(20)->withQueryString();
 
         return view('super-admin.sub-categories.index', compact('subCategories'));
     }

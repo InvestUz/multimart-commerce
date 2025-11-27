@@ -21,6 +21,8 @@ class Banner extends Model
         'clicks' => 'integer',
         'starts_at' => 'datetime',
         'expires_at' => 'datetime',
+        'start_date' => 'date',
+        'end_date' => 'date',
     ];
 
     public function scopeActive($query)

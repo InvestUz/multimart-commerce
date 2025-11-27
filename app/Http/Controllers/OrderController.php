@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Address;
+use App\Models\UserAddress;
 use App\Models\Coupon;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,7 @@ class OrderController extends Controller
     public function checkout()
     {
         $cartItems = auth()->user()->cart()
-            ->with(['product.images', 'product.vendor', 'variant'])
+            ->with(['product.images', 'product.vendor'])
             ->get();
 
         if ($cartItems->isEmpty()) {
@@ -27,34 +28,38 @@ class OrderController extends Controller
             return $item->price * $item->quantity;
         });
 
-        $shippingAddresses = auth()->user()->addresses()
-            ->where('type', 'shipping')
-            ->get();
+        // Get all user addresses (since there's no type column)
+        $addresses = auth()->user()->addresses()->get();
+        
+        // For now, we'll use all addresses for both shipping and billing
+        // In a real application, you might want to add a type column to the database
+        $shippingAddresses = $addresses;
+        $billingAddresses = $addresses;
 
-        $billingAddresses = auth()->user()->addresses()
-            ->where('type', 'billing')
-            ->get();
+        // Get active payment methods
+        $paymentMethods = \App\Models\PaymentMethod::active()->ordered()->get();
 
         return view('checkout', compact(
             'cartItems',
             'subtotal',
             'shippingAddresses',
-            'billingAddresses'
+            'billingAddresses',
+            'paymentMethods'
         ));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'shipping_address_id' => 'required|exists:addresses,id',
-            'billing_address_id' => 'required|exists:addresses,id',
-            'payment_method' => 'required|in:cod,card,paypal',
+            'shipping_address_id' => 'required|exists:user_addresses,id,user_id,' . auth()->id(),
+            'billing_address_id' => 'required|exists:user_addresses,id,user_id,' . auth()->id(),
+            'payment_method' => 'required|exists:payment_methods,code',
             'coupon_code' => 'nullable|string',
             'notes' => 'nullable|string|max:1000',
         ]);
 
         $cartItems = auth()->user()->cart()
-            ->with(['product', 'variant'])
+            ->with(['product'])
             ->get();
 
         if ($cartItems->isEmpty()) {
@@ -79,21 +84,18 @@ class OrderController extends Controller
         if ($request->coupon_code) {
             $coupon = Coupon::where('code', $request->coupon_code)
                 ->where('is_active', true)
-                ->where('start_date', '<=', now())
-                ->where('end_date', '>=', now())
+                ->where('starts_at', '<=', now())
+                ->where('expires_at', '>=', now())
                 ->first();
 
             if ($coupon && $subtotal >= $coupon->min_purchase) {
                 if ($coupon->type === 'percentage') {
                     $discount = $subtotal * ($coupon->value / 100);
-                    if ($coupon->max_discount) {
-                        $discount = min($discount, $coupon->max_discount);
-                    }
                 } else {
                     $discount = $coupon->value;
                 }
 
-                if ($coupon->usage_limit && $coupon->used_count >= $coupon->usage_limit) {
+                if ($coupon->max_uses && $coupon->used_count >= $coupon->max_uses) {
                     return back()->with('error', 'Coupon usage limit exceeded');
                 }
             }
@@ -105,6 +107,10 @@ class OrderController extends Controller
 
         DB::beginTransaction();
         try {
+            // Get address details
+            $shippingAddress = UserAddress::find($validated['shipping_address_id']);
+            $billingAddress = UserAddress::find($validated['billing_address_id']);
+
             // Create order
             $order = Order::create([
                 'user_id' => auth()->id(),
@@ -121,6 +127,15 @@ class OrderController extends Controller
                 'notes' => $validated['notes'],
                 'shipping_address_id' => $validated['shipping_address_id'],
                 'billing_address_id' => $validated['billing_address_id'],
+                // Store address details for reference
+                'customer_name' => $shippingAddress->full_name,
+                'customer_email' => auth()->user()->email,
+                'customer_phone' => $shippingAddress->phone,
+                'shipping_address' => $shippingAddress->address_line1 . ($shippingAddress->address_line2 ? ', ' . $shippingAddress->address_line2 : ''),
+                'city' => $shippingAddress->city,
+                'state' => $shippingAddress->state,
+                'postal_code' => $shippingAddress->postal_code,
+                'country' => $shippingAddress->country,
             ]);
 
             // Create order items
@@ -128,7 +143,6 @@ class OrderController extends Controller
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $item->product_id,
-                    'variant_id' => $item->variant_id,
                     'vendor_id' => $item->product->vendor_id,
                     'quantity' => $item->quantity,
                     'price' => $item->price,
@@ -148,6 +162,9 @@ class OrderController extends Controller
             // Clear cart
             auth()->user()->cart()->delete();
 
+            // Send notification to admins and vendors
+            $this->notifyAdminsAndVendors($order);
+
             DB::commit();
 
             return redirect()->route('orders.show', $order)
@@ -156,6 +173,26 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to place order. Please try again.');
+        }
+    }
+
+    /**
+     * Send notification to admins and vendors when an order is placed
+     */
+    protected function notifyAdminsAndVendors(Order $order)
+    {
+        // Notify super admins
+        $admins = User::where('role', 'super_admin')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new \App\Notifications\NewOrderPlaced($order));
+        }
+
+        // Notify vendors
+        $vendors = $order->items->pluck('vendor')->unique('id');
+        foreach ($vendors as $vendor) {
+            if ($vendor) {
+                $vendor->notify(new \App\Notifications\NewOrderPlaced($order));
+            }
         }
     }
 

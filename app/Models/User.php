@@ -155,7 +155,23 @@ class User extends Authenticatable
     }
 
     /**
-     * Addresses belonging to this user
+     * Get the default shipping address
+     */
+    public function defaultShippingAddress()
+    {
+        return $this->hasOne(UserAddress::class)->where('type', 'shipping')->where('is_default', true);
+    }
+
+    /**
+     * Get the default billing address
+     */
+    public function defaultBillingAddress()
+    {
+        return $this->hasOne(UserAddress::class)->where('type', 'billing')->where('is_default', true);
+    }
+
+    /**
+     * Addresses for this user
      */
     public function addresses()
     {
@@ -191,7 +207,15 @@ class User extends Authenticatable
      */
     public function notifications()
     {
-        return $this->hasMany(Notification::class);
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
+
+    /**
+     * Unread notifications for this user
+     */
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at');
     }
 
     /**
@@ -208,21 +232,5 @@ class User extends Authenticatable
     public function refunds()
     {
         return $this->hasMany(Refund::class);
-    }
-
-    /**
-     * Get the default shipping address
-     */
-    public function defaultShippingAddress()
-    {
-        return $this->hasOne(UserAddress::class)->where('type', 'shipping')->where('is_default', true);
-    }
-
-    /**
-     * Get the default billing address
-     */
-    public function defaultBillingAddress()
-    {
-        return $this->hasOne(UserAddress::class)->where('type', 'billing')->where('is_default', true);
     }
 }

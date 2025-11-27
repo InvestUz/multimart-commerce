@@ -86,7 +86,7 @@
             <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
                 <a href="{{ route('product.show', $product->slug) }}">
                     @if($product->images->first())
-                    <img src="{{ Storage::url($product->images->first()->image_path) }}"
+                    <img src="{{ asset('storage/' . $product->images->first()->image_path) }}"
                          alt="{{ $product->name }}"
                          class="w-full h-48 object-cover">
                     @else

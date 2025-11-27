@@ -5,9 +5,39 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class VendorController extends Controller
 {
+    public function create()
+    {
+        return view('super-admin.vendors.create');
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'store_name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'password' => 'required|string|min:8|confirmed',
+            'address' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+
+        $validated['password'] = Hash::make($validated['password']);
+        $validated['role'] = 'vendor';
+        $validated['email_verified_at'] = now();
+        $validated['is_active'] = $request->boolean('is_active', true);
+
+        $vendor = User::create($validated);
+
+        return redirect()->route('super-admin.vendors.index')
+            ->with('success', 'Vendor created successfully!');
+    }
+
     public function index(Request $request)
     {
         $query = User::where('role', 'vendor')
@@ -122,5 +152,45 @@ class VendorController extends Controller
 
         return redirect()->route('super-admin.vendors.index')
             ->with('success', 'Vendor deleted successfully!');
+    }
+
+    public function edit(User $vendor)
+    {
+        if ($vendor->role !== 'vendor') {
+            abort(404);
+        }
+
+        return view('super-admin.vendors.edit', compact('vendor'));
+    }
+
+    public function update(Request $request, User $vendor)
+    {
+        if ($vendor->role !== 'vendor') {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,'.$vendor->id,
+            'store_name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+
+        // Only update password if provided
+        if ($request->filled('password')) {
+            $request->validate([
+                'password' => 'string|min:8|confirmed',
+            ]);
+            $validated['password'] = Hash::make($request->password);
+        }
+
+        $validated['is_active'] = $request->boolean('is_active', $vendor->is_active);
+
+        $vendor->update($validated);
+
+        return redirect()->route('super-admin.vendors.show', $vendor)
+            ->with('success', 'Vendor updated successfully!');
     }
 }

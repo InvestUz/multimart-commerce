@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Category;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -80,5 +81,90 @@ class DashboardController extends Controller
             'orderStatusDistribution',
             'topVendors'
         ));
+    }
+    
+    /**
+     * Get notifications for the authenticated user
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function notifications()
+    {
+        /** @var User $user */
+        $user = auth()->user();
+        
+        // Get unread notifications for the current user
+        $notifications = Notification::forUser($user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+            
+        // Count unread notifications
+        $unreadCount = Notification::forUser($user->id)->unread()->count();
+        
+        // Transform notifications for the response
+        $formattedNotifications = $notifications->map(function ($notification) {
+            return [
+                'id' => $notification->id,
+                'title' => $this->getNotificationTitle($notification),
+                'message' => $this->getNotificationMessage($notification),
+                'created_at' => $notification->created_at->toIso8601String(),
+                'read' => $notification->isRead(),
+            ];
+        });
+        
+        return response()->json([
+            'notifications' => $formattedNotifications,
+            'unread_count' => $unreadCount,
+        ]);
+    }
+    
+    /**
+     * Get notification title based on type
+     *
+     * @param Notification $notification
+     * @return string
+     */
+    private function getNotificationTitle($notification)
+    {
+        switch ($notification->type) {
+            case 'App\Notifications\NewOrderPlaced':
+                return 'New Order Placed';
+            case 'App\Notifications\NewVendorRegistered':
+                return 'New Vendor Registration';
+            case 'App\Notifications\SupportTicketCreated':
+                return 'New Support Ticket';
+            case 'App\Notifications\RefundRequest':
+                return 'New Refund Request';
+            default:
+                return 'Notification';
+        }
+    }
+    
+    /**
+     * Get notification message based on type
+     *
+     * @param Notification $notification
+     * @return string
+     */
+    private function getNotificationMessage($notification)
+    {
+        switch ($notification->type) {
+            case 'App\Notifications\NewOrderPlaced':
+                $orderId = $notification->data['order_id'] ?? 'N/A';
+                $customerName = $notification->data['customer_name'] ?? 'A customer';
+                return "{$customerName} placed a new order (#{$orderId})";
+            case 'App\Notifications\NewVendorRegistered':
+                $vendorName = $notification->data['vendor_name'] ?? 'A vendor';
+                return "{$vendorName} has registered as a new vendor";
+            case 'App\Notifications\SupportTicketCreated':
+                $ticketSubject = $notification->data['subject'] ?? 'A support ticket';
+                return "New support ticket: {$ticketSubject}";
+            case 'App\Notifications\RefundRequest':
+                $orderId = $notification->data['order_id'] ?? 'N/A';
+                return "New refund request for order #{$orderId}";
+            default:
+                return 'You have a new notification';
+        }
     }
 }

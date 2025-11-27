@@ -24,6 +24,15 @@ class Coupon extends Model
         'expires_at' => 'datetime',
     ];
 
+    // ============================================
+    // Relationships
+    // ============================================
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true)

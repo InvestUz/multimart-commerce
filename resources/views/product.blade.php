@@ -9,7 +9,7 @@
         <div>
             <div class="mb-4">
                 @if($product->images->first())
-                <img id="main-image" src="{{ Storage::url($product->images->first()->image_path) }}"
+                <img id="main-image" src="{{ asset('storage/' . $product->images->first()->image_path) }}"
                      alt="{{ $product->name }}"
                      class="w-full h-96 object-cover rounded-lg">
                 @endif
@@ -18,9 +18,9 @@
             @if($product->images->count() > 1)
             <div class="grid grid-cols-4 gap-2">
                 @foreach($product->images as $image)
-                <img src="{{ Storage::url($image->image_path) }}"
+                <img src="{{ asset('storage/' . $image->image_path) }}"
                      alt="{{ $product->name }}"
-                     onclick="changeImage('{{ Storage::url($image->image_path) }}')"
+                     onclick="changeImage('{{ asset('storage/' . $image->image_path) }}')"
                      class="w-full h-20 object-cover rounded cursor-pointer hover:opacity-75">
                 @endforeach
             </div>
@@ -187,7 +187,7 @@
             <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
                 <a href="{{ route('product.show', $related->slug) }}">
                     @if($related->images->first())
-                    <img src="{{ Storage::url($related->images->first()->image_path) }}"
+                    <img src="{{ asset('storage/' . $related->images->first()->image_path) }}"
                          alt="{{ $related->name }}"
                          class="w-full h-48 object-cover">
                     @endif
@@ -241,6 +241,11 @@
     }
 
     @auth
+    function getCsrfToken() {
+        const token = document.querySelector('meta[name="csrf-token"]');
+        return token ? token.getAttribute('content') : '';
+    }
+
     function addToCart() {
         const quantity = document.getElementById('quantity').value;
 
@@ -248,24 +253,37 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': getCsrfToken()
             },
             body: JSON.stringify({
                 product_id: {{ $product->id }},
                 quantity: parseInt(quantity)
             })
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return res.json();
+        })
         .then(data => {
             if (data.success) {
-                document.getElementById('cart-count').textContent = data.cart_count;
-                alert('Product added to cart!');
+                // Update cart count in header if element exists
+                const cartCountElement = document.getElementById('cart-count');
+                if (cartCountElement) {
+                    cartCountElement.textContent = data.cart_count;
+                }
+                // Show success message with option to view cart
+                if (confirm('Product added to cart successfully! Would you like to view your cart now?')) {
+                    window.location.href = '{{ route("cart.index") }}';
+                }
             } else {
-                alert(data.message);
+                alert(data.message || 'Failed to add product to cart');
             }
         })
         .catch(error => {
-            alert('Error adding to cart');
+            console.error('Error:', error);
+            alert('Error adding to cart. Please try again.');
         });
     }
 
@@ -274,18 +292,33 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': getCsrfToken()
             },
             body: JSON.stringify({
                 product_id: {{ $product->id }}
             })
         })
-        .then(res => res.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
-                document.getElementById('wishlist-count').textContent = data.wishlist_count;
+                // Update wishlist count in header if element exists
+                const wishlistCountElement = document.getElementById('wishlist-count');
+                if (wishlistCountElement) {
+                    wishlistCountElement.textContent = data.wishlist_count;
+                }
                 alert(data.message);
+            } else {
+                alert(data.message || 'Failed to update wishlist');
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error updating wishlist. Please try again.');
         });
     }
     @endauth

@@ -30,7 +30,7 @@
             <div class="flex flex-col h-full">
                 <!-- Logo -->
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-800">
-                    <a href="{{ route('home') }}" class="text-xl font-bold">{{ config('app.name') }}</a>
+                    <a href="{{ route('home') }}" class="text-xl font-bold text-gold-400">{{ config('app.name') }}</a>
                 </div>
 
                 <!-- Navigation -->
@@ -49,9 +49,18 @@
                         <a href="{{ route('super-admin.orders.index') }}"
                            class="flex items-center px-4 py-3 text-sm font-medium rounded-lg {{ request()->routeIs('super-admin.orders.*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                             </svg>
                             Orders
+                        </a>
+                        
+                        <!-- Payment Methods -->
+                        <a href="{{ route('super-admin.payment-methods.index') }}"
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg {{ request()->routeIs('super-admin.payment-methods.*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                            Payment Methods
                         </a>
 
                         <!-- Products -->
@@ -70,6 +79,15 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                             </svg>
                             Categories
+                        </a>
+
+                        <!-- Sub-Categories -->
+                        <a href="{{ route('super-admin.sub-categories.index') }}"
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg {{ request()->routeIs('super-admin.sub-categories.*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                            Sub-Categories
                         </a>
 
                         <!-- Vendors -->
@@ -106,6 +124,24 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
                             </svg>
                             Reviews
+                        </a>
+
+                        <!-- Coupons -->
+                        <a href="{{ route('super-admin.coupons.index') }}"
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg {{ request()->routeIs('super-admin.coupons.*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                            </svg>
+                            Coupons
+                        </a>
+
+                        <!-- Banners -->
+                        <a href="{{ route('super-admin.banners.index') }}"
+                           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg {{ request()->routeIs('super-admin.banners.*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Banners
                         </a>
 
                         <!-- Settings -->
@@ -156,12 +192,31 @@
 
                     <div class="flex items-center space-x-4">
                         <!-- Notifications -->
-                        <button class="relative text-gray-500 hover:text-gray-700">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                            </svg>
-                            <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
-                        </button>
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="relative text-gray-500 hover:text-gold-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                </svg>
+                                <span id="notification-count" class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
+                            </button>
+                            
+                            <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg py-1 z-50">
+                                <div class="px-4 py-3 border-b border-gray-200">
+                                    <p class="text-sm font-medium text-gray-900">Notifications</p>
+                                </div>
+                                
+                                <div id="notifications-list" class="max-h-96 overflow-y-auto">
+                                    <!-- Notifications will be loaded here -->
+                                    <div class="px-4 py-3 text-sm text-gray-500 text-center">
+                                        Loading notifications...
+                                    </div>
+                                </div>
+                                
+                                <div class="px-4 py-3 border-t border-gray-200 text-center">
+                                    <a href="{{ route('super-admin.notifications.view') }}" class="text-sm text-gold-600 hover:text-gold-800">View all notifications</a>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- View Store -->
                         <a href="{{ route('home') }}" target="_blank" class="text-sm text-gray-600 hover:text-gray-900">
@@ -191,5 +246,91 @@
     </div>
 
     @stack('scripts')
+    
+    <script>
+        // Function to fetch and display notifications
+        function fetchNotifications() {
+            fetch('/notifications')
+                .then(response => response.json())
+                .then(data => {
+                    const notificationsList = document.getElementById('notifications-list');
+                    const notificationCount = document.getElementById('notification-count');
+                    
+                    // Update notification count
+                    if (data.unread_count > 0) {
+                        notificationCount.style.display = 'block';
+                        notificationCount.textContent = data.unread_count;
+                    } else {
+                        notificationCount.style.display = 'none';
+                    }
+                    
+                    // Clear loading message
+                    notificationsList.innerHTML = '';
+                    
+                    // Display notifications
+                    if (data.notifications.length > 0) {
+                        data.notifications.forEach(notification => {
+                            const notificationElement = document.createElement('div');
+                            notificationElement.className = 'px-4 py-3 border-b border-gray-200 hover:bg-gray-50';
+                            notificationElement.innerHTML = `
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 rounded-full bg-gold-100 flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-gold-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm font-medium text-gray-900">${notification.title}</p>
+                                        <p class="text-sm text-gray-500 mt-1">${notification.message}</p>
+                                        <p class="text-xs text-gray-400 mt-1">${formatDate(notification.created_at)}</p>
+                                    </div>
+                                </div>
+                            `;
+                            notificationsList.appendChild(notificationElement);
+                        });
+                    } else {
+                        notificationsList.innerHTML = `
+                            <div class="px-4 py-6 text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                </svg>
+                                <h3 class="mt-2 text-sm font-medium text-gray-900">No notifications</h3>
+                                <p class="mt-1 text-sm text-gray-500">You're all caught up!</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching notifications:', error);
+                    const notificationsList = document.getElementById('notifications-list');
+                    notificationsList.innerHTML = `
+                        <div class="px-4 py-3 text-sm text-red-500 text-center">
+                            Failed to load notifications
+                        </div>
+                    `;
+                });
+        }
+        
+        // Format date function
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+        
+        // Fetch notifications when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchNotifications();
+            
+            // Refresh notifications every 30 seconds
+            setInterval(fetchNotifications, 30000);
+        });
+    </script>
 </body>
 </html>
