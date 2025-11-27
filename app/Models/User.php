@@ -233,4 +233,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(Refund::class);
     }
+
+    /**
+     * Payouts for this vendor
+     */
+    public function payouts()
+    {
+        return $this->hasMany(VendorPayout::class, 'vendor_id');
+    }
+
+    /**
+     * Bank accounts for this vendor
+     */
+    public function bankAccounts()
+    {
+        return $this->hasMany(VendorBankAccount::class, 'vendor_id');
+    }
 }

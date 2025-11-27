@@ -337,6 +337,7 @@ Route::prefix('vendor')->name('vendor.')->middleware(['auth', 'vendor'])->group(
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/sales', [Vendor\ReportController::class, 'sales'])->name('sales');
         Route::get('/products', [Vendor\ReportController::class, 'products'])->name('products');
+        Route::get('/orders', [Vendor\ReportController::class, 'orders'])->name('orders');
     });
 });
 

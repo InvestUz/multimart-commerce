@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+use App\Notifications\OrderStatusUpdated;
+use App\Models\User;
 
 class Order extends Model
 {
@@ -267,7 +270,7 @@ class Order extends Model
         }
 
         // Send notification to customer
-        $this->user->notify(new \App\Notifications\OrderStatusUpdated($this, $status));
+        // $this->user->notify(new \App\Notifications\OrderStatusUpdated($this, $status));
     }
 
     public function markAsPaid(): void
@@ -423,9 +426,32 @@ class Order extends Model
         // Calculate totals
         $order->calculateTotals();
 
+        // Send notification to admins and vendors
+        static::notifyAdminsAndVendors($order);
+
         // Clear cart
         Cart::clearForUser($user);
 
         return $order;
+    }
+
+    /**
+     * Send notification to admins and vendors when an order is placed
+     */
+    public static function notifyAdminsAndVendors(Order $order)
+    {
+        // Notify super admins
+        $admins = User::where('role', 'super_admin')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new \App\Notifications\NewOrderPlaced($order));
+        }
+
+        // Notify vendors
+        $vendors = $order->items->pluck('vendor')->unique('id');
+        foreach ($vendors as $vendor) {
+            if ($vendor) {
+                $vendor->notify(new \App\Notifications\NewOrderPlaced($order));
+            }
+        }
     }
 }

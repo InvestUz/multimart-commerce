@@ -64,4 +64,37 @@ class ReportController extends Controller
 
         return view('vendor.reports.products', compact('topProducts', 'lowStockProducts'));
     }
+
+    public function orders(Request $request)
+    {
+        $vendor = auth()->user();
+
+        // Get order items with related data
+        $query = $vendor->vendorOrderItems()
+            ->with(['order.user', 'product', 'order'])
+            ->orderBy('created_at', 'desc');
+
+        // Filter by date range if provided
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [
+                $request->input('start_date'),
+                $request->input('end_date')
+            ]);
+        }
+
+        // Filter by status if provided
+        if ($request->filled('status')) {
+            $query->where('vendor_status', $request->input('status'));
+        }
+
+        $orders = $query->paginate(20);
+
+        // Get status counts for filter
+        $statusCounts = $vendor->vendorOrderItems()
+            ->select('vendor_status', DB::raw('COUNT(*) as count'))
+            ->groupBy('vendor_status')
+            ->pluck('count', 'vendor_status');
+
+        return view('vendor.reports.orders', compact('orders', 'statusCounts'));
+    }
 }

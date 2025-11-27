@@ -244,11 +244,19 @@ class CartController extends Controller
             ? ($subtotal * $coupon->value) / 100 
             : $coupon->value;
 
+        // Calculate updated totals
+        $shipping = 10; // Fixed shipping cost
+        $tax = ($subtotal - $discount) * 0.1; // 10% tax on (subtotal - discount)
+        $total = $subtotal - $discount + $shipping + $tax;
+
         return response()->json([
             'success' => true,
             'message' => 'Coupon applied successfully!',
             'discount' => $discount,
-            'coupon_code' => $coupon->code
+            'coupon_code' => $coupon->code,
+            'subtotal' => $subtotal,
+            'tax' => $tax,
+            'total' => $total
         ]);
     }
 }

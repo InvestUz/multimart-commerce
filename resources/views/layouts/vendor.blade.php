@@ -90,13 +90,35 @@
                     </a>
 
                     <!-- Reports -->
-                    <a href="{{ route('vendor.reports.sales') }}"
-                       class="flex items-center px-4 py-3 text-sm font-medium rounded-lg {{ request()->routeIs('vendor.reports.*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                        Reports
-                    </a>
+                    <div x-data="{ open: {{ request()->routeIs('vendor.reports.*') ? 'true' : 'false' }} }">
+                        <button @click="open = !open" 
+                                class="flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-lg {{ request()->routeIs('vendor.reports.*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                                Reports
+                            </div>
+                            <svg :class="{'rotate-180': open}" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        
+                        <div x-show="open" class="mt-1 ml-4 space-y-1">
+                            <a href="{{ route('vendor.reports.sales') }}"
+                               class="block px-4 py-2 text-sm rounded-lg {{ request()->routeIs('vendor.reports.sales') ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
+                                Sales Report
+                            </a>
+                            <a href="{{ route('vendor.reports.products') }}"
+                               class="block px-4 py-2 text-sm rounded-lg {{ request()->routeIs('vendor.reports.products') ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
+                                Product Report
+                            </a>
+                            <a href="{{ route('vendor.reports.orders') }}"
+                               class="block px-4 py-2 text-sm rounded-lg {{ request()->routeIs('vendor.reports.orders') ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
+                                Orders Report
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </nav>
 

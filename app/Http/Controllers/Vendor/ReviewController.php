@@ -11,7 +11,7 @@ class ReviewController extends Controller
     public function index(Request $request)
     {
         $query = Review::whereHas('product', function ($q) {
-                $q->where('vendor_id', auth()->id());
+                $q->where('user_id', auth()->id());
             })
             ->with(['user', 'product']);
 
@@ -27,7 +27,7 @@ class ReviewController extends Controller
 
     public function respond(Request $request, Review $review)
     {
-        if ($review->product->vendor_id !== auth()->id()) {
+        if ($review->product->user_id !== auth()->id()) {
             abort(403);
         }
 

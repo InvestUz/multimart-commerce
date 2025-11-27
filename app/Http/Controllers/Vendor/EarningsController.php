@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
-use App\Models\Payout;
+use App\Models\VendorPayout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class EarningsController extends Controller
 {
@@ -20,7 +21,7 @@ class EarningsController extends Controller
             ->sum('total');
 
         $pendingEarnings = $vendor->vendorOrderItems()
-            ->where('status', 'delivered')
+            ->where('vendor_status', 'delivered')
             ->whereNull('payout_id')
             ->sum('total');
 
@@ -44,7 +45,7 @@ class EarningsController extends Controller
 
         // Recent transactions
         $recentTransactions = $vendor->vendorOrderItems()
-            ->with(['order.user', 'product'])
+            ->with(['order.user', 'product.images'])
             ->latest()
             ->take(20)
             ->get();
@@ -77,7 +78,7 @@ class EarningsController extends Controller
         $vendor = auth()->user();
 
         $pendingEarnings = $vendor->vendorOrderItems()
-            ->where('status', 'delivered')
+            ->where('vendor_status', 'delivered')
             ->whereNull('payout_id')
             ->sum('total');
 
@@ -91,7 +92,7 @@ class EarningsController extends Controller
             return back()->with('error', 'Invalid bank account.');
         }
 
-        Payout::create([
+        VendorPayout::create([
             'vendor_id' => $vendor->id,
             'payout_number' => 'PAY-' . strtoupper(Str::random(10)),
             'amount' => $validated['amount'],

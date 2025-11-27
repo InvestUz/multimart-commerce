@@ -12,10 +12,10 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $query = auth()->user()->vendorOrderItems()
-            ->with(['order.user', 'product']);
+            ->with(['order.user', 'product.images']);
 
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $query->where('vendor_status', $request->status);
         }
 
         $orders = $query->latest()->paginate(20);

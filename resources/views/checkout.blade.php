@@ -244,6 +244,10 @@
                                 <span>Subtotal</span>
                                 <span>${{ number_format($subtotal, 2) }}</span>
                             </div>
+                            <div class="flex justify-between text-gray-600 discount-line hidden">
+                                <span>Discount</span>
+                                <span>-$0.00</span>
+                            </div>
                             <div class="flex justify-between text-gray-600">
                                 <span>Shipping</span>
                                 <span>$10.00</span>
@@ -508,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Apply coupon function
     function applyCoupon(couponCode) {
-        fetch('/cart/apply-coupon', {
+        fetch('{{ route('cart.apply-coupon') }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -523,7 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 showMessage(data.message, 'success');
                 // Update order summary with discount
-                updateOrderSummaryWithDiscount(data.discount);
+                updateOrderSummaryWithDiscount(data);
             } else {
                 showMessage(data.message || 'Invalid coupon code', 'error');
             }
@@ -535,41 +539,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Update order summary with discount
-    function updateOrderSummaryWithDiscount(discount) {
-        // This would normally fetch updated totals from the server
-        // For now, we'll just update the display
-        const subtotalElement = document.querySelector('.space-y-3 .flex.justify-between:nth-child(1) span:last-child');
-        const taxElement = document.querySelector('.space-y-3 .flex.justify-between:nth-child(3) span:last-child');
-        const totalElement = document.querySelector('.border-t.pt-3.flex.justify-between span:last-child');
+    function updateOrderSummaryWithDiscount(data) {
+        // Show discount line
+        const discountLine = document.querySelector('.discount-line');
+        if (discountLine) {
+            discountLine.classList.remove('hidden');
+            discountLine.querySelector('span:last-child').textContent = '-$' + data.discount.toFixed(2);
+        }
         
-        if (subtotalElement && taxElement && totalElement) {
-            const subtotal = parseFloat(subtotalElement.textContent.replace('$', ''));
-            const tax = parseFloat(taxElement.textContent.replace('$', ''));
-            const total = parseFloat(totalElement.textContent.replace('$', ''));
-            
-            // Update tax (10% of (subtotal - discount))
-            const newTax = (subtotal - discount) * 0.1;
-            taxElement.textContent = '$' + newTax.toFixed(2);
-            
-            // Update total (subtotal - discount + shipping + newTax)
-            const shipping = 10; // Fixed shipping cost
-            const newTotal = subtotal - discount + shipping + newTax;
-            totalElement.textContent = '$' + newTotal.toFixed(2);
-            
-            // Add discount line if not already present
-            const discountLine = document.querySelector('.discount-line');
-            if (!discountLine) {
-                const taxContainer = taxElement.closest('.flex.justify-between').parentElement;
-                const discountElement = document.createElement('div');
-                discountElement.className = 'flex justify-between text-gray-600 discount-line';
-                discountElement.innerHTML = `
-                    <span>Discount</span>
-                    <span>-$${discount.toFixed(2)}</span>
-                `;
-                taxContainer.insertBefore(discountElement, taxContainer.querySelector('.border-t').previousElementSibling);
-            } else {
-                discountLine.querySelector('span:last-child').textContent = '-$' + discount.toFixed(2);
-            }
+        // Update tax
+        const taxElement = document.querySelector('.space-y-3 .flex.justify-between:nth-child(4) span:last-child');
+        if (taxElement) {
+            taxElement.textContent = '$' + data.tax.toFixed(2);
+        }
+        
+        // Update total
+        const totalElement = document.querySelector('.border-t.pt-3.flex.justify-between span:last-child');
+        if (totalElement) {
+            totalElement.textContent = '$' + data.total.toFixed(2);
         }
     }
 });
