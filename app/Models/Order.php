@@ -6,7 +6,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use App\Notifications\OrderStatusUpdated;
+use App\Notifications\NewOrderPlaced;
 use App\Models\User;
+use App\Models\Cart;
+use App\Models\Coupon;
+use App\Models\UserAddress;
+use App\Models\OrderItem;
+use App\Models\OrderStatusHistory;
+use App\Models\Refund;
+use App\Models\SupportTicket;
 
 class Order extends Model
 {
@@ -36,6 +44,8 @@ class Order extends Model
         'paid_at',
         'shipped_at',
         'delivered_at',
+        'shipping_address_id',
+        'billing_address_id',
     ];
 
     protected $casts = [
@@ -247,7 +257,7 @@ class Order extends Model
     public static function generateOrderNumber(): string
     {
         do {
-            $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(\Str::random(6));
+            $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(Str::random(6));
         } while (static::where('order_number', $orderNumber)->exists());
 
         return $orderNumber;
@@ -443,14 +453,14 @@ class Order extends Model
         // Notify super admins
         $admins = User::where('role', 'super_admin')->get();
         foreach ($admins as $admin) {
-            $admin->notify(new \App\Notifications\NewOrderPlaced($order));
+            $admin->notify(new NewOrderPlaced($order));
         }
 
         // Notify vendors
         $vendors = $order->items->pluck('vendor')->unique('id');
         foreach ($vendors as $vendor) {
             if ($vendor) {
-                $vendor->notify(new \App\Notifications\NewOrderPlaced($order));
+                $vendor->notify(new NewOrderPlaced($order));
             }
         }
     }

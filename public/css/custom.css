@@ -1,0 +1,46 @@
+/* Custom CSS for Onebazar */
+
+/* Gold color palette */
+.bg-gold-50 { background-color: #FFFBEB; }
+.bg-gold-100 { background-color: #FEF3C7; }
+.bg-gold-200 { background-color: #FDE68A; }
+.bg-gold-300 { background-color: #FCD34D; }
+.bg-gold-400 { background-color: #FBBF24; }
+.bg-gold-500 { background-color: #F59E0B; }
+.bg-gold-600 { background-color: #D97706; }
+.bg-gold-700 { background-color: #B45309; }
+.bg-gold-800 { background-color: #92400E; }
+.bg-gold-900 { background-color: #78350F; }
+
+.text-gold-50 { color: #FFFBEB; }
+.text-gold-100 { color: #FEF3C7; }
+.text-gold-200 { color: #FDE68A; }
+.text-gold-300 { color: #FCD34D; }
+.text-gold-400 { color: #FBBF24; }
+.text-gold-500 { color: #F59E0B; }
+.text-gold-600 { color: #D97706; }
+.text-gold-700 { color: #B45309; }
+.text-gold-800 { color: #92400E; }
+.text-gold-900 { color: #78350F; }
+
+.border-gold-50 { border-color: #FFFBEB; }
+.border-gold-100 { border-color: #FEF3C7; }
+.border-gold-200 { border-color: #FDE68A; }
+.border-gold-300 { border-color: #FCD34D; }
+.border-gold-400 { border-color: #FBBF24; }
+.border-gold-500 { border-color: #F59E0B; }
+.border-gold-600 { border-color: #D97706; }
+.border-gold-700 { border-color: #B45309; }
+.border-gold-800 { border-color: #92400E; }
+.border-gold-900 { border-color: #78350F; }
+
+.ring-gold-50 { --tw-ring-color: #FFFBEB; }
+.ring-gold-100 { --tw-ring-color: #FEF3C7; }
+.ring-gold-200 { --tw-ring-color: #FDE68A; }
+.ring-gold-300 { --tw-ring-color: #FCD34D; }
+.ring-gold-400 { --tw-ring-color: #FBBF24; }
+.ring-gold-500 { --tw-ring-color: #F59E0B; }
+.ring-gold-600 { --tw-ring-color: #D97706; }
+.ring-gold-700 { --tw-ring-color: #B45309; }
+.ring-gold-800 { --tw-ring-color: #92400E; }
+.ring-gold-900 { --tw-ring-color: #78350F; }

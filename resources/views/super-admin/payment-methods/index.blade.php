@@ -11,7 +11,7 @@
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
             <a href="{{ route('super-admin.payment-methods.create') }}" 
-               class="inline-flex items-center justify-center rounded-md border border-transparent bg-gold-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gold-700 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2 sm:w-auto">
+               class="inline-flex items-center justify-center rounded-md border border-transparent bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-lg hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto transition duration-300 ease-in-out transform hover:scale-105">
                 Add Payment Method
             </a>
         </div>
@@ -86,7 +86,7 @@
                                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                                         <div class="flex space-x-2">
                                             <a href="{{ route('super-admin.payment-methods.edit', $paymentMethod) }}" 
-                                               class="text-gold-600 hover:text-gold-900">
+                                               class="text-blue-600 hover:text-blue-800 font-medium transition duration-300 ease-in-out">
                                                 Edit
                                             </a>
                                             <form action="{{ route('super-admin.payment-methods.toggle-status', $paymentMethod) }}" 
@@ -94,7 +94,7 @@
                                                   class="inline">
                                                 @csrf
                                                 <button type="submit" 
-                                                        class="text-{{ $paymentMethod->is_active ? 'red' : 'green' }}-600 hover:text-{{ $paymentMethod->is_active ? 'red' : 'green' }}-900">
+                                                        class="text-{{ $paymentMethod->is_active ? 'red' : 'green' }}-600 hover:text-{{ $paymentMethod->is_active ? 'red' : 'green' }}-800 font-medium transition duration-300 ease-in-out">
                                                     {{ $paymentMethod->is_active ? 'Disable' : 'Enable' }}
                                                 </button>
                                             </form>
@@ -105,7 +105,7 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" 
-                                                        class="text-red-600 hover:text-red-900">
+                                                        class="text-red-600 hover:text-red-800 font-medium transition duration-300 ease-in-out">
                                                     Delete
                                                 </button>
                                             </form>

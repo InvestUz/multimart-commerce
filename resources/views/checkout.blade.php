@@ -153,9 +153,16 @@
                                         <input type="radio" name="payment_method" value="{{ $paymentMethod->code }}" 
                                                class="h-4 w-4 text-gold-600 border-gray-300 focus:ring-gold-500" 
                                                {{ $index === 0 ? 'checked' : '' }}>
-                                        <div class="flex-1">
-                                            <span class="font-medium">{{ $paymentMethod->name }}</span>
-                                            <p class="text-gray-600 text-sm">{{ $paymentMethod->description }}</p>
+                                        <div class="flex items-center space-x-3">
+                                            @if($paymentMethod->image_path)
+                                                <img src="{{ asset('storage/' . $paymentMethod->image_path) }}" 
+                                                     alt="{{ $paymentMethod->name }}" 
+                                                     class="h-8 w-8 object-contain">
+                                            @endif
+                                            <div>
+                                                <span class="font-medium">{{ $paymentMethod->name }}</span>
+                                                <p class="text-gray-600 text-sm">{{ $paymentMethod->description }}</p>
+                                            </div>
                                         </div>
                                     </label>
                                 </div>
@@ -297,17 +304,130 @@
 document.addEventListener('DOMContentLoaded', function() {
     const sameAsShippingCheckbox = document.querySelector('input[name="same_as_shipping"]');
     const billingAddressSection = document.getElementById('billing-address-section');
+    const shippingAddressRadios = document.querySelectorAll('input[name="shipping_address_id"]');
+    const billingAddressRadios = document.querySelectorAll('input[name="billing_address_id"]');
+    const form = document.querySelector('form[action="{{ route('orders.store') }}"]');
+    
+    // Function to sync billing address with shipping address
+    function syncBillingWithShipping() {
+        if (sameAsShippingCheckbox && sameAsShippingCheckbox.checked) {
+            // Find the selected shipping address
+            let selectedShippingId = null;
+            shippingAddressRadios.forEach(radio => {
+                if (radio.checked) {
+                    selectedShippingId = radio.value;
+                }
+            });
+            
+            // If no shipping address is selected but there are options, select the first one
+            if (!selectedShippingId && shippingAddressRadios.length > 0) {
+                selectedShippingId = shippingAddressRadios[0].value;
+                shippingAddressRadios[0].checked = true;
+            }
+            
+            // Select the same billing address
+            if (selectedShippingId) {
+                billingAddressRadios.forEach(radio => {
+                    if (radio.value === selectedShippingId) {
+                        radio.checked = true;
+                    }
+                });
+                
+                // Also create a hidden input to ensure the billing address is submitted
+                let hiddenInput = document.querySelector('input[name="billing_address_id"][type="hidden"]');
+                if (!hiddenInput) {
+                    hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'billing_address_id';
+                    form.appendChild(hiddenInput);
+                }
+                hiddenInput.value = selectedShippingId;
+                
+                // Debug: Log the hidden input creation
+                console.log('Created hidden input for billing address:', selectedShippingId);
+            }
+        } else {
+            // Remove the hidden input if it exists
+            const hiddenInput = document.querySelector('input[name="billing_address_id"][type="hidden"]');
+            if (hiddenInput) {
+                hiddenInput.remove();
+                console.log('Removed hidden input for billing address');
+            }
+        }
+    }
     
     if (sameAsShippingCheckbox) {
         sameAsShippingCheckbox.addEventListener('change', function() {
             if (this.checked) {
                 billingAddressSection.classList.add('hidden');
+                // Sync billing address with shipping address
+                syncBillingWithShipping();
             } else {
                 billingAddressSection.classList.remove('hidden');
+                // Remove the hidden input if it exists
+                const hiddenInput = document.querySelector('input[name="billing_address_id"][type="hidden"]');
+                if (hiddenInput) {
+                    hiddenInput.remove();
+                }
+            }
+        });
+        
+        // Also sync when shipping address changes
+        shippingAddressRadios.forEach(radio => {
+            radio.addEventListener('change', syncBillingWithShipping);
+        });
+    }
+    
+    // Initial sync on page load if "same as shipping" is checked
+    if (sameAsShippingCheckbox && sameAsShippingCheckbox.checked) {
+        syncBillingWithShipping();
+    }
+    
+    // Add form submit handler to ensure all required data is present
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Debug: Log form data before submission
+            console.log('Form submission initiated');
+            
+            // Validate that both shipping and billing addresses are selected
+            const shippingAddressSelected = document.querySelector('input[name="shipping_address_id"]:checked');
+            const billingAddressSelected = document.querySelector('input[name="billing_address_id"]:checked') || 
+                                          document.querySelector('input[name="billing_address_id"][type="hidden"]');
+            
+            console.log('Shipping address selected:', shippingAddressSelected ? shippingAddressSelected.value : 'None');
+            console.log('Billing address selected:', billingAddressSelected ? billingAddressSelected.value : 'None');
+            
+            if (!shippingAddressSelected) {
+                e.preventDefault();
+                alert('Please select a shipping address');
+                return false;
+            }
+            
+            if (!billingAddressSelected) {
+                e.preventDefault();
+                alert('Please select a billing address');
+                return false;
+            }
+            
+            // Validate payment method
+            const paymentMethodSelected = document.querySelector('input[name="payment_method"]:checked');
+            console.log('Payment method selected:', paymentMethodSelected ? paymentMethodSelected.value : 'None');
+            
+            if (!paymentMethodSelected) {
+                e.preventDefault();
+                alert('Please select a payment method');
+                return false;
+            }
+            
+            // Log all form data
+            const formData = new FormData(form);
+            console.log('Form data being submitted:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
             }
         });
     }
-
+    
     // Quantity adjustment and item removal functionality
     const cartContainer = document.getElementById('cart-items-container');
     
@@ -384,8 +504,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
             body: JSON.stringify({
-                quantity: newQty,
-                _method: 'PUT'
+                quantity: newQty
             })
         })
         .then(response => {
@@ -529,7 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update order summary with discount
                 updateOrderSummaryWithDiscount(data);
             } else {
-                showMessage(data.message || 'Invalid coupon code', 'error');
+                showMessage(data.message, 'error');
             }
         })
         .catch(error => {

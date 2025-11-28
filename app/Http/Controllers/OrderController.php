@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -50,13 +51,78 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'shipping_address_id' => 'required|exists:user_addresses,id,user_id,' . auth()->id(),
-            'billing_address_id' => 'required|exists:user_addresses,id,user_id,' . auth()->id(),
-            'payment_method' => 'required|exists:payment_methods,code',
-            'coupon_code' => 'nullable|string',
-            'notes' => 'nullable|string|max:1000',
-        ]);
+        try {
+            // Debug: Log the request data
+            \Log::info('Order placement attempt', [
+                'user_id' => auth()->id(),
+                'request_data' => $request->all()
+            ]);
+            
+            $validated = $request->validate([
+                'shipping_address_id' => 'required|integer',
+                'billing_address_id' => 'required|integer',
+                'payment_method' => 'required|exists:payment_methods,code',
+                'coupon_code' => 'nullable|string',
+                'notes' => 'nullable|string|max:1000',
+            ]);
+            
+            // Debug: Log validated data
+            \Log::info('Order validation passed', [
+                'user_id' => auth()->id(),
+                'validated_data' => $validated
+            ]);
+            
+            // Additional validation to check if addresses belong to the user and exist
+            $userId = auth()->id();
+            $shippingAddress = UserAddress::where('id', $validated['shipping_address_id'])
+                ->where('user_id', $userId)
+                ->first();
+                
+            $billingAddress = UserAddress::where('id', $validated['billing_address_id'])
+                ->where('user_id', $userId)
+                ->first();
+                
+            if (!$shippingAddress) {
+                \Log::warning('Invalid shipping address selected', [
+                    'user_id' => $userId,
+                    'address_id' => $validated['shipping_address_id']
+                ]);
+                return back()->with('error', 'Invalid shipping address selected')->withInput();
+            }
+            
+            if (!$billingAddress) {
+                \Log::warning('Invalid billing address selected', [
+                    'user_id' => $userId,
+                    'address_id' => $validated['billing_address_id']
+                ]);
+                return back()->with('error', 'Invalid billing address selected')->withInput();
+            }
+            
+            // Update validated data with the address objects
+            $validated['shipping_address_id'] = $shippingAddress->id;
+            $validated['billing_address_id'] = $billingAddress->id;
+            
+            // Debug: Log address validation passed
+            \Log::info('Address validation passed', [
+                'user_id' => $userId,
+                'shipping_address_id' => $shippingAddress->id,
+                'billing_address_id' => $billingAddress->id
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Order validation failed', [
+                'user_id' => auth()->id(),
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+            return back()->with('error', 'Validation failed: ' . json_encode($e->errors()))->withInput();
+        } catch (\Exception $e) {
+            \Log::error('Order validation error', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+                'request_data' => $request->all()
+            ]);
+            return back()->with('error', 'Validation error: ' . $e->getMessage())->withInput();
+        }
 
         $cartItems = auth()->user()->cart()
             ->with(['product'])
@@ -69,7 +135,7 @@ class OrderController extends Controller
         // Check stock availability
         foreach ($cartItems as $item) {
             if ($item->product->stock < $item->quantity) {
-                return back()->with('error', "Insufficient stock for {$item->product->name}");
+                return back()->with('error', "Insufficient stock for {$item->product->name}")->withInput();
             }
         }
 
@@ -96,8 +162,10 @@ class OrderController extends Controller
                 }
 
                 if ($coupon->max_uses && $coupon->used_count >= $coupon->max_uses) {
-                    return back()->with('error', 'Coupon usage limit exceeded');
+                    return back()->with('error', 'Coupon usage limit exceeded')->withInput();
                 }
+            } else {
+                return back()->with('error', 'Invalid coupon code')->withInput();
             }
         }
 
@@ -107,9 +175,30 @@ class OrderController extends Controller
 
         DB::beginTransaction();
         try {
+            // Debug: Log before order creation
+            \Log::info('Starting order creation transaction', [
+                'user_id' => auth()->id()
+            ]);
+            
             // Get address details
             $shippingAddress = UserAddress::find($validated['shipping_address_id']);
             $billingAddress = UserAddress::find($validated['billing_address_id']);
+            
+            if (!$shippingAddress || !$billingAddress) {
+                \Log::error('Shipping or billing address not found', [
+                    'user_id' => auth()->id(),
+                    'shipping_address_id' => $validated['shipping_address_id'],
+                    'billing_address_id' => $validated['billing_address_id']
+                ]);
+                throw new \Exception('Shipping or billing address not found');
+            }
+            
+            // Debug: Log address details
+            \Log::info('Address details retrieved', [
+                'user_id' => auth()->id(),
+                'shipping_address' => $shippingAddress->toArray(),
+                'billing_address' => $billingAddress->toArray()
+            ]);
 
             // Create order
             $order = Order::create([
@@ -137,9 +226,30 @@ class OrderController extends Controller
                 'postal_code' => $shippingAddress->postal_code,
                 'country' => $shippingAddress->country,
             ]);
+            
+            // Debug: Log order created
+            \Log::info('Order created successfully', [
+                'user_id' => auth()->id(),
+                'order_id' => $order->id,
+                'order_number' => $order->order_number
+            ]);
 
             // Create order items
+            \Log::info('Creating order items', [
+                'user_id' => auth()->id(),
+                'order_id' => $order->id,
+                'cart_items_count' => $cartItems->count()
+            ]);
+            
             foreach ($cartItems as $item) {
+                \Log::info('Creating order item', [
+                    'user_id' => auth()->id(),
+                    'order_id' => $order->id,
+                    'product_id' => $item->product_id,
+                    'quantity' => $item->quantity,
+                    'price' => $item->price
+                ]);
+                
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $item->product_id,
@@ -161,18 +271,41 @@ class OrderController extends Controller
 
             // Clear cart
             auth()->user()->cart()->delete();
+            
+            // Debug: Log cart cleared
+            \Log::info('Cart cleared', [
+                'user_id' => auth()->id()
+            ]);
 
             // Send notification to admins and vendors
             $this->notifyAdminsAndVendors($order);
+            
+            // Debug: Log notifications sent
+            \Log::info('Notifications sent', [
+                'user_id' => auth()->id(),
+                'order_id' => $order->id
+            ]);
 
             DB::commit();
+            
+            // Debug: Log transaction committed
+            \Log::info('Order transaction committed', [
+                'user_id' => auth()->id(),
+                'order_id' => $order->id
+            ]);
 
             return redirect()->route('orders.show', $order)
                 ->with('success', 'Order placed successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to place order. Please try again.');
+            \Log::error('Order placement failed: ' . $e->getMessage(), [
+                'user_id' => auth()->id(),
+                'request_data' => $request->all(),
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->with('error', 'Failed to place order: ' . $e->getMessage())->withInput();
         }
     }
 

@@ -461,7 +461,7 @@
         
         if (categoryId) {
             // Fetch subcategories for selected category
-            fetch(`/api/categories/${categoryId}/subcategories`)
+            fetch(`{{ route('vendor.products.sub-categories', ['categoryId' => '__categoryId__']) }}`.replace('__categoryId__', categoryId))
                 .then(response => response.json())
                 .then(data => {
                     data.forEach(subcategory => {

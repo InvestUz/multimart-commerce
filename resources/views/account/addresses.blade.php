@@ -284,28 +284,35 @@
 
     function setAsDefault(addressId) {
         if (confirm('Are you sure you want to set this address as default?')) {
-            fetch(`/account/addresses/${addressId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    is_default: true
+            // First, get the current address data
+            fetch(`/account/addresses/${addressId}/edit`)
+                .then(response => response.json())
+                .then(data => {
+                    // Then update it with is_default set to true
+                    return fetch(`/account/addresses/${addressId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            ...data,
+                            is_default: true
+                        })
+                    });
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Failed to set address as default');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while setting address as default');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to set address as default: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while setting address as default');
+                });
         }
     }
 

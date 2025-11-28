@@ -282,6 +282,7 @@ Route::prefix('vendor')->name('vendor.')->middleware(['auth', 'vendor'])->group(
     Route::post('/products/{product}/toggle-status', [Vendor\ProductController::class, 'toggleStatus'])->name('products.toggle-status');
     Route::delete('/products/{product}/images/{image}', [Vendor\ProductController::class, 'deleteImage'])->name('products.delete-image');
     Route::post('/products/{product}/images/reorder', [Vendor\ProductController::class, 'reorderImages'])->name('products.reorder-images');
+    Route::get('/products/sub-categories/{categoryId}', [Vendor\ProductController::class, 'getSubCategories'])->name('products.sub-categories');
 
     // Product Variants
     Route::prefix('products/{product}/variants')->name('products.variants.')->group(function () {
@@ -406,6 +407,51 @@ Route::post('/test-address-create', function (Request $request) {
     }
 })->name('test.address.create');
 
+// Test route for debugging categories
+Route::get('/test-category/{slug}', function ($slug) {
+    try {
+        $category = \App\Models\Category::where('slug', $slug)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        $subCategories = $category->subCategories()
+            ->where('is_active', true)
+            ->withCount('products')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'category' => $category,
+            'sub_categories' => $subCategories,
+            'sub_categories_count' => $subCategories->count()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to load category: ' . $e->getMessage()
+        ], 404);
+    }
+})->name('test.category');
+
+// Simple test route to check if database is working
+Route::get('/test-db', function () {
+    try {
+        $count = \App\Models\Category::count();
+        $categories = \App\Models\Category::pluck('name')->toArray();
+        
+        return response()->json([
+            'success' => true,
+            'count' => $count,
+            'categories' => $categories
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Database error: ' . $e->getMessage()
+        ], 500);
+    }
+})->name('test.db');
+
 // Test route for notifications
 Route::get('/test-notification', function () {
     // Get the super admin user
@@ -511,9 +557,3 @@ Route::get('/page/{slug}', [HomeController::class, 'page'])->name('page.show');
 | Wishlist Routes
 |--------------------------------------------------------------------------
 */
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
-    Route::post('/wishlist', [WishlistController::class, 'store'])->name('wishlist.store');
-    Route::delete('/wishlist', [WishlistController::class, 'destroy'])->name('wishlist.destroy');
-});

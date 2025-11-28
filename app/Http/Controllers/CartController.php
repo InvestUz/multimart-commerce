@@ -90,8 +90,6 @@ class CartController extends Controller
     public function update(Request $request, Cart $cart)
     {
         try {
-            $this->authorize('update', $cart);
-
             $validated = $request->validate([
                 'quantity' => 'required|integer|min:1',
             ]);
@@ -139,8 +137,6 @@ class CartController extends Controller
     public function destroy(Cart $cart)
     {
         try {
-            $this->authorize('delete', $cart);
-            
             // Check if the cart item belongs to the authenticated user
             if ($cart->user_id !== auth()->id()) {
                 return response()->json([
@@ -204,30 +200,53 @@ class CartController extends Controller
             'coupon_code' => 'required|string',
         ]);
 
-        $coupon = Coupon::where('code', strtoupper($validated['coupon_code']))
-            ->where('is_active', true)
-            ->where('starts_at', '<=', now())
-            ->where('expires_at', '>=', now())
-            ->first();
-
-        if (!$coupon) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid coupon code.'
-            ], 400);
-        }
-
         // Get cart items
         $cartItems = auth()->user()->cart()->get();
         $subtotal = $cartItems->sum(function ($item) {
             return $item->price * $item->quantity;
         });
 
+        $couponCode = strtoupper($validated['coupon_code']);
+        
+        // First check if coupon exists at all
+        $coupon = Coupon::where('code', $couponCode)->first();
+        
+        if (!$coupon) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The coupon code "' . $validated['coupon_code'] . '" does not exist. Please check the code and try again.'
+            ], 400);
+        }
+
+        // Check if coupon is active
+        if (!$coupon->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The coupon code "' . $validated['coupon_code'] . '" is not currently active.'
+            ], 400);
+        }
+
+        // Check if coupon has started
+        if ($coupon->starts_at && $coupon->starts_at->isFuture()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The coupon code "' . $validated['coupon_code'] . '" is not yet valid. It will be available starting ' . $coupon->starts_at->format('M j, Y') . '.'
+            ], 400);
+        }
+
+        // Check if coupon has expired
+        if ($coupon->expires_at && $coupon->expires_at->isPast()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The coupon code "' . $validated['coupon_code'] . '" has expired. It was valid until ' . $coupon->expires_at->format('M j, Y') . '.'
+            ], 400);
+        }
+
         // Check minimum purchase requirement
         if ($subtotal < $coupon->min_purchase) {
             return response()->json([
                 'success' => false,
-                'message' => 'Minimum purchase of $' . number_format($coupon->min_purchase, 2) . ' required for this coupon.'
+                'message' => 'Minimum purchase of $' . number_format($coupon->min_purchase, 2) . ' required for this coupon. Your current subtotal is $' . number_format($subtotal, 2) . '.'
             ], 400);
         }
 
@@ -235,7 +254,7 @@ class CartController extends Controller
         if ($coupon->max_uses && $coupon->used_count >= $coupon->max_uses) {
             return response()->json([
                 'success' => false,
-                'message' => 'Coupon usage limit exceeded.'
+                'message' => 'The coupon code "' . $validated['coupon_code'] . '" has reached its maximum usage limit.'
             ], 400);
         }
 

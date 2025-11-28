@@ -45,10 +45,10 @@ class PaymentMethodController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->only(['name', 'code', 'description', 'is_active', 'sort_order']);
+        $data = $request->only(['name', 'code', 'description', 'sort_order']);
         
-        // Set default values
-        $data['is_active'] = $request->has('is_active') ? (bool) $request->is_active : false;
+        // Handle checkbox input properly
+        $data['is_active'] = $request->input('is_active', false);
         $data['sort_order'] = $request->sort_order ?? 0;
 
         // Handle image upload
@@ -89,10 +89,10 @@ class PaymentMethodController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->only(['name', 'code', 'description', 'is_active', 'sort_order']);
+        $data = $request->only(['name', 'code', 'description', 'sort_order']);
         
-        // Set default values
-        $data['is_active'] = $request->has('is_active') ? (bool) $request->is_active : false;
+        // Handle checkbox input properly
+        $data['is_active'] = $request->input('is_active', false);
         $data['sort_order'] = $request->sort_order ?? 0;
 
         // Handle image upload

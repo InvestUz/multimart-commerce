@@ -34,6 +34,18 @@
                     primary: '#3490dc',
                     secondary: '#ffed4e',
                     danger: '#e3342f',
+                    gold: {
+                        50: '#FFFBEB',
+                        100: '#FEF3C7',
+                        200: '#FDE68A',
+                        300: '#FCD34D',
+                        400: '#FBBF24',
+                        500: '#F59E0B',
+                        600: '#D97706',
+                        700: '#B45309',
+                        800: '#92400E',
+                        900: '#78350F',
+                    },
                 }
             }
         }
@@ -147,8 +159,8 @@
                                 </div>
                             </div>
                         @else
-                            <a href="{{ route('login') }}" class="text-gray-500 hover:text-gold-600 px-3 py-2 rounded-md text-sm font-medium border border-gray-300 hover:border-gold-300">Login</a>
-                            <a href="{{ route('register') }}" class="px-4 py-2 bg-gold-600 text-white rounded-full hover:bg-gold-700 text-sm font-medium">
+                            <a href="{{ route('login') }}" class="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 text-sm font-medium transition duration-300 ease-in-out transform hover:scale-105">Login</a>
+                            <a href="{{ route('register') }}" class="px-4 py-2 bg-gradient-to-r from-gold-500 to-gold-600 text-white rounded-full hover:from-gold-600 hover:to-gold-700 text-sm font-medium transition duration-300 ease-in-out transform hover:scale-105 shadow-lg">
                                 Register
                             </a>
                         @endauth
@@ -202,8 +214,8 @@
                     @else
                         <div class="border-t border-gray-200 pt-4 pb-3">
                             <div class="space-y-1 px-4">
-                                <a href="{{ route('login') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md border border-gray-300 hover:border-gold-300 text-center">Login</a>
-                                <a href="{{ route('register') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md bg-gold-600 text-white text-center hover:bg-gold-700">Register</a>
+                                <a href="{{ route('login') }}" class="block px-4 py-2 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md text-center transition duration-300 ease-in-out">Login</a>
+                                <a href="{{ route('register') }}" class="block px-4 py-2 text-base font-medium text-white bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 rounded-md text-center transition duration-300 ease-in-out shadow-md">Register</a>
                             </div>
                         </div>
                     @endauth

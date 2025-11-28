@@ -17,7 +17,9 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = auth()->user()->products()
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        $query = $user->products()
             ->with(['category', 'brand', 'images'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews');
@@ -294,5 +296,18 @@ class ProductController extends Controller
             'success' => true,
             'message' => 'Images reordered successfully!'
         ]);
+    }
+
+    /**
+     * Get sub-categories by category ID
+     */
+    public function getSubCategories($categoryId)
+    {
+        $subCategories = SubCategory::where('category_id', $categoryId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return response()->json($subCategories);
     }
 }

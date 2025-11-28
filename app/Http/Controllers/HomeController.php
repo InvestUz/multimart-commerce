@@ -259,7 +259,7 @@ class HomeController extends Controller
 
             $validated['user_id'] = auth()->id();
             // Properly handle the checkbox value - if not present, set to false
-            $validated['is_default'] = $request->has('is_default') ? (bool) $request->is_default : false;
+            $validated['is_default'] = $request->input('is_default', false);
             
             // If this is set as default, unset other defaults
             if ($validated['is_default']) {
@@ -268,8 +268,17 @@ class HomeController extends Controller
 
             UserAddress::create($validated);
 
+            // Check if this is a JSON request (for AJAX)
+            if ($request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Address added successfully!']);
+            }
+
             return back()->with('success', 'Address added successfully!');
         } catch (\Exception $e) {
+            // Check if this is a JSON request (for AJAX)
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to add address: ' . $e->getMessage()]);
+            }
             return back()->with('error', 'Failed to add address: ' . $e->getMessage())->withInput();
         }
     }
@@ -296,7 +305,7 @@ class HomeController extends Controller
             ]);
 
             // Properly handle the checkbox value - if not present, set to false
-            $validated['is_default'] = $request->has('is_default') ? (bool) $request->is_default : false;
+            $validated['is_default'] = $request->input('is_default', false);
 
             // If this is set as default, unset other defaults
             if ($validated['is_default']) {
@@ -307,8 +316,17 @@ class HomeController extends Controller
 
             $address->update($validated);
 
+            // Check if this is a JSON request (for AJAX)
+            if ($request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Address updated successfully!']);
+            }
+
             return back()->with('success', 'Address updated successfully!');
         } catch (\Exception $e) {
+            // Check if this is a JSON request (for AJAX)
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to update address: ' . $e->getMessage()]);
+            }
             return back()->with('error', 'Failed to update address: ' . $e->getMessage())->withInput();
         }
     }
