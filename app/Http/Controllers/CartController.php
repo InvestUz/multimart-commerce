@@ -11,7 +11,9 @@ class CartController extends Controller
 {
     public function index()
     {
-        $cartItems = auth()->user()->cart()
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        $cartItems = $user->cart()
             ->with(['product.images', 'product.vendor'])
             ->get();
 
@@ -47,8 +49,11 @@ class CartController extends Controller
                 ], 400);
             }
 
+            /** @var \App\Models\User $user */
+            $user = auth()->user();
+            
             // Check if item already in cart
-            $existingCart = auth()->user()->cart()
+            $existingCart = $user->cart()
                 ->where('product_id', $validated['product_id'])
                 ->first();
 
@@ -72,7 +77,7 @@ class CartController extends Controller
                 ]);
             }
 
-            $cartCount = auth()->user()->cart()->count();
+            $cartCount = $user->cart()->count();
 
             return response()->json([
                 'success' => true,
@@ -111,7 +116,9 @@ class CartController extends Controller
 
             $cart->update(['quantity' => $validated['quantity']]);
 
-            $cartItems = auth()->user()->cart()->get();
+            /** @var \App\Models\User $user */
+            $user = auth()->user();
+            $cartItems = $user->cart()->get();
             $subtotal = $cartItems->sum(function ($item) {
                 return $item->price * $item->quantity;
             });
@@ -147,7 +154,9 @@ class CartController extends Controller
             
             $cart->delete();
 
-            $cartCount = auth()->user()->cart()->count();
+            /** @var \App\Models\User $user */
+            $user = auth()->user();
+            $cartCount = $user->cart()->count();
 
             return response()->json([
                 'success' => true,
@@ -170,7 +179,9 @@ class CartController extends Controller
     public function count()
     {
         try {
-            $count = auth()->user()->cart()->count();
+            /** @var \App\Models\User $user */
+            $user = auth()->user();
+            $count = $user->cart()->count();
             return response()->json(['count' => $count]);
         } catch (\Exception $e) {
             return response()->json(['count' => 0], 500);
@@ -180,7 +191,9 @@ class CartController extends Controller
     public function clear()
     {
         try {
-            auth()->user()->cart()->delete();
+            /** @var \App\Models\User $user */
+            $user = auth()->user();
+            $user->cart()->delete();
 
             return response()->json([
                 'success' => true,
@@ -200,8 +213,11 @@ class CartController extends Controller
             'coupon_code' => 'required|string',
         ]);
 
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        
         // Get cart items
-        $cartItems = auth()->user()->cart()->get();
+        $cartItems = $user->cart()->get();
         $subtotal = $cartItems->sum(function ($item) {
             return $item->price * $item->quantity;
         });

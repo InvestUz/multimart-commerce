@@ -26,6 +26,9 @@ Route::get('/search', [HomeController::class, 'search'])->name('search');
 Route::get('/brands', [HomeController::class, 'brands'])->name('brands.index');
 Route::get('/brand/{slug}', [HomeController::class, 'brand'])->name('brand.show');
 
+// Language switch route
+Route::get('/lang/{locale}', [HomeController::class, 'switchLanguage'])->name('lang.switch');
+
 // About pages
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');

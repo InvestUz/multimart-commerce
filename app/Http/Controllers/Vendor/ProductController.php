@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\App;
 
 class ProductController extends Controller
 {
@@ -49,13 +50,15 @@ class ProductController extends Controller
     {
         $categories = Category::where('is_active', true)->orderBy('name')->get();
         $brands = Brand::where('is_active', true)->orderBy('name')->get();
+        $locales = ['en' => 'English', 'ru' => 'Russian', 'uz' => 'Uzbek'];
 
-        return view('vendor.products.create', compact('categories', 'brands'));
+        return view('vendor.products.create', compact('categories', 'brands', 'locales'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            // Default language fields
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:products,slug',
             'sku' => 'required|string|max:100|unique:products,sku',
@@ -76,6 +79,13 @@ class ProductController extends Controller
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string|max:500',
             'meta_keywords' => 'nullable|string|max:255',
+            // Multilingual fields
+            'name_translations.*' => 'nullable|string|max:255',
+            'description_translations.*' => 'nullable|string',
+            'short_description_translations.*' => 'nullable|string|max:500',
+            'meta_title_translations.*' => 'nullable|string|max:255',
+            'meta_description_translations.*' => 'nullable|string|max:500',
+            'meta_keywords_translations.*' => 'nullable|string|max:255',
         ]);
 
         if (!$request->filled('slug')) {
@@ -87,6 +97,37 @@ class ProductController extends Controller
         DB::beginTransaction();
         try {
             $product = Product::create($validated);
+
+            // Handle multilingual fields
+            $locales = ['en', 'ru', 'uz'];
+            foreach ($locales as $locale) {
+                if ($request->filled("name_translations.$locale")) {
+                    $product->setNameTranslation($locale, $request->input("name_translations.$locale"));
+                }
+                
+                if ($request->filled("description_translations.$locale")) {
+                    $product->setDescriptionTranslation($locale, $request->input("description_translations.$locale"));
+                }
+                
+                if ($request->filled("short_description_translations.$locale")) {
+                    $product->setShortDescriptionTranslation($locale, $request->input("short_description_translations.$locale"));
+                }
+                
+                if ($request->filled("meta_title_translations.$locale")) {
+                    $product->setMetaTitleTranslation($locale, $request->input("meta_title_translations.$locale"));
+                }
+                
+                if ($request->filled("meta_description_translations.$locale")) {
+                    $product->setMetaDescriptionTranslation($locale, $request->input("meta_description_translations.$locale"));
+                }
+                
+                if ($request->filled("meta_keywords_translations.$locale")) {
+                    $product->setMetaKeywordsTranslation($locale, $request->input("meta_keywords_translations.$locale"));
+                }
+            }
+            
+            // Save the translations
+            $product->save();
 
             // Handle images
             if ($request->hasFile('images')) {
@@ -140,8 +181,9 @@ class ProductController extends Controller
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
+        $locales = ['en' => 'English', 'ru' => 'Russian', 'uz' => 'Uzbek'];
 
-        return view('vendor.products.edit', compact('product', 'categories', 'brands', 'subCategories'));
+        return view('vendor.products.edit', compact('product', 'categories', 'brands', 'subCategories', 'locales'));
     }
 
     public function update(Request $request, Product $product)
@@ -149,6 +191,7 @@ class ProductController extends Controller
         $this->authorize('update', $product);
 
         $validated = $request->validate([
+            // Default language fields
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:products,slug,' . $product->id,
             'sku' => 'required|string|max:100|unique:products,sku,' . $product->id,
@@ -169,6 +212,13 @@ class ProductController extends Controller
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string|max:500',
             'meta_keywords' => 'nullable|string|max:255',
+            // Multilingual fields
+            'name_translations.*' => 'nullable|string|max:255',
+            'description_translations.*' => 'nullable|string',
+            'short_description_translations.*' => 'nullable|string|max:500',
+            'meta_title_translations.*' => 'nullable|string|max:255',
+            'meta_description_translations.*' => 'nullable|string|max:500',
+            'meta_keywords_translations.*' => 'nullable|string|max:255',
         ]);
 
         if (!$request->filled('slug')) {
@@ -178,6 +228,37 @@ class ProductController extends Controller
         DB::beginTransaction();
         try {
             $product->update($validated);
+
+            // Handle multilingual fields
+            $locales = ['en', 'ru', 'uz'];
+            foreach ($locales as $locale) {
+                if ($request->filled("name_translations.$locale")) {
+                    $product->setNameTranslation($locale, $request->input("name_translations.$locale"));
+                }
+                
+                if ($request->filled("description_translations.$locale")) {
+                    $product->setDescriptionTranslation($locale, $request->input("description_translations.$locale"));
+                }
+                
+                if ($request->filled("short_description_translations.$locale")) {
+                    $product->setShortDescriptionTranslation($locale, $request->input("short_description_translations.$locale"));
+                }
+                
+                if ($request->filled("meta_title_translations.$locale")) {
+                    $product->setMetaTitleTranslation($locale, $request->input("meta_title_translations.$locale"));
+                }
+                
+                if ($request->filled("meta_description_translations.$locale")) {
+                    $product->setMetaDescriptionTranslation($locale, $request->input("meta_description_translations.$locale"));
+                }
+                
+                if ($request->filled("meta_keywords_translations.$locale")) {
+                    $product->setMetaKeywordsTranslation($locale, $request->input("meta_keywords_translations.$locale"));
+                }
+            }
+            
+            // Save the translations
+            $product->save();
 
             // Handle new images
             if ($request->hasFile('images')) {

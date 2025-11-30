@@ -74,16 +74,16 @@
                         <!-- Navigation Links -->
                         <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                             <a href="{{ route('home') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('home') ? 'border-gold-500 text-gold-600' : 'border-transparent text-gray-500' }} hover:text-gold-600 hover:border-gold-300 text-sm font-medium">
-                                Home
+                                {{ __('messages.home') }}
                             </a>
                             <a href="{{ route('brands.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('brands.*') ? 'border-gold-500 text-gold-600' : 'border-transparent text-gray-500' }} hover:text-gold-600 hover:border-gold-300 text-sm font-medium">
-                                Brands
+                                {{ __('messages.brands') }}
                             </a>
                             <a href="{{ route('about') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('about') ? 'border-gold-500 text-gold-600' : 'border-transparent text-gray-500' }} hover:text-gold-600 hover:border-gold-300 text-sm font-medium">
-                                About
+                                {{ __('messages.about') }}
                             </a>
                             <a href="{{ route('contact') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('contact') ? 'border-gold-500 text-gold-600' : 'border-transparent text-gray-500' }} hover:text-gold-600 hover:border-gold-300 text-sm font-medium">
-                                Contact
+                                {{ __('messages.contact') }}
                             </a>
                         </div>
                     </div>
@@ -97,10 +97,30 @@
 
                     <!-- Right Side -->
                     <div class="hidden sm:flex sm:items-center sm:ml-6 space-x-4">
+                        <!-- Language Switcher -->
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="flex items-center text-sm font-medium text-gray-500 hover:text-gold-600 p-2 rounded-full hover:bg-gray-100">
+                                <span class="capitalize">{{ app()->getLocale() }}</span>
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+
+                            <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-32 bg-white rounded-md shadow-lg py-1 z-50">
+                                <a href="{{ route('lang.switch', ['locale' => 'en']) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ app()->getLocale() === 'en' ? 'bg-gray-100' : '' }}">
+                                    English
+                                </a>
+                                <a href="{{ route('lang.switch', ['locale' => 'ru']) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ app()->getLocale() === 'ru' ? 'bg-gray-100' : '' }}">
+                                    Русский
+                                </a>
+                                <a href="{{ route('lang.switch', ['locale' => 'uz']) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ app()->getLocale() === 'uz' ? 'bg-gray-100' : '' }}">
+                                    O'zbek
+                                </a>
+                            </div>
+                        </div>
+
                         <!-- Search -->
                         <form action="{{ route('search') }}" method="GET" class="flex items-center">
                             <div class="relative">
-                                <input type="text" name="q" placeholder="Search products..."
+                                <input type="text" name="q" placeholder="{{ __('messages.search_placeholder') }}"
                                        class="w-64 rounded-full border-gray-300 focus:border-gold-500 focus:ring-gold-500 pl-4 pr-10 py-2 text-sm" 
                                        value="{{ request()->get('q') }}" />
                                 <button type="submit" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gold-600">
@@ -136,32 +156,32 @@
                                 <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                                     @if(Auth::user()->role === 'super_admin')
                                         <a href="{{ route('super-admin.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Admin Dashboard
+                                            {{ __('messages.admin_dashboard') }}
                                         </a>
                                     @elseif(Auth::user()->role === 'vendor')
                                         <a href="{{ route('vendor.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Vendor Dashboard
+                                            {{ __('messages.vendor_dashboard') }}
                                         </a>
                                     @endif
 
                                     <a href="{{ route('orders.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                        My Orders
+                                        {{ __('messages.my_orders') }}
                                     </a>
                                     <a href="{{ route('account.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                        Profile
+                                        {{ __('messages.profile') }}
                                     </a>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
                                         <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Logout
+                                            {{ __('messages.logout') }}
                                         </button>
                                     </form>
                                 </div>
                             </div>
                         @else
-                            <a href="{{ route('login') }}" class="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 text-sm font-medium transition duration-300 ease-in-out transform hover:scale-105">Login</a>
+                            <a href="{{ route('login') }}" class="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 text-sm font-medium transition duration-300 ease-in-out transform hover:scale-105">{{ __('messages.login') }}</a>
                             <a href="{{ route('register') }}" class="px-4 py-2 bg-gradient-to-r from-gold-500 to-gold-600 text-white rounded-full hover:from-gold-600 hover:to-gold-700 text-sm font-medium transition duration-300 ease-in-out transform hover:scale-105 shadow-lg">
-                                Register
+                                {{ __('messages.register') }}
                             </a>
                         @endauth
                     </div>
@@ -171,16 +191,16 @@
             <!-- Mobile menu -->
             <div x-show="mobileMenuOpen" class="sm:hidden" x-cloak>
                 <div class="pt-2 pb-3 space-y-1">
-                    <a href="{{ route('home') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('home') ? 'border-gold-500 text-gold-600 bg-gold-50' : 'border-transparent text-gray-600' }} hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 text-base font-medium">Home</a>
-                    <a href="{{ route('brands.index') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('brands.*') ? 'border-gold-500 text-gold-600 bg-gold-50' : 'border-transparent text-gray-600' }} hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 text-base font-medium">Brands</a>
-                    <a href="{{ route('about') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('about') ? 'border-gold-500 text-gold-600 bg-gold-50' : 'border-transparent text-gray-600' }} hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 text-base font-medium">About</a>
-                    <a href="{{ route('contact') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('contact') ? 'border-gold-500 text-gold-600 bg-gold-50' : 'border-transparent text-gray-600' }} hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 text-base font-medium">Contact</a>
+                    <a href="{{ route('home') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('home') ? 'border-gold-500 text-gold-600 bg-gold-50' : 'border-transparent text-gray-600' }} hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 text-base font-medium">{{ __('messages.home') }}</a>
+                    <a href="{{ route('brands.index') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('brands.*') ? 'border-gold-500 text-gold-600 bg-gold-50' : 'border-transparent text-gray-600' }} hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 text-base font-medium">{{ __('messages.brands') }}</a>
+                    <a href="{{ route('about') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('about') ? 'border-gold-500 text-gold-600 bg-gold-50' : 'border-transparent text-gray-600' }} hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 text-base font-medium">{{ __('messages.about') }}</a>
+                    <a href="{{ route('contact') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('contact') ? 'border-gold-500 text-gold-600 bg-gold-50' : 'border-transparent text-gray-600' }} hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 text-base font-medium">{{ __('messages.contact') }}</a>
                     
                     <!-- Mobile Search -->
                     <div class="px-4 py-2">
                         <form action="{{ route('search') }}" method="GET" class="flex items-center">
                             <div class="relative w-full">
-                                <input type="text" name="q" placeholder="Search products..."
+                                <input type="text" name="q" placeholder="{{ __('messages.search_placeholder') }}"
                                        class="w-full rounded-full border-gray-300 focus:border-gold-500 focus:ring-gold-500 pl-4 pr-10 py-2 text-sm" 
                                        value="{{ request()->get('q') }}" />
                                 <button type="submit" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gold-600">
@@ -199,23 +219,23 @@
                             </div>
                             <div class="mt-3 space-y-1">
                                 @if(Auth::user()->role === 'super_admin')
-                                    <a href="{{ route('super-admin.dashboard') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Admin Dashboard</a>
+                                    <a href="{{ route('super-admin.dashboard') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">{{ __('messages.admin_dashboard') }}</a>
                                 @elseif(Auth::user()->role === 'vendor')
-                                    <a href="{{ route('vendor.dashboard') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Vendor Dashboard</a>
+                                    <a href="{{ route('vendor.dashboard') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">{{ __('messages.vendor_dashboard') }}</a>
                                 @endif
-                                <a href="{{ route('orders.index') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">My Orders</a>
-                                <a href="{{ route('account.profile') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Profile</a>
+                                <a href="{{ route('orders.index') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">{{ __('messages.my_orders') }}</a>
+                                <a href="{{ route('account.profile') }}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">{{ __('messages.profile') }}</a>
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
-                                    <button type="submit" class="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">Logout</button>
+                                    <button type="submit" class="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">{{ __('messages.logout') }}</button>
                                 </form>
                             </div>
                         </div>
                     @else
                         <div class="border-t border-gray-200 pt-4 pb-3">
                             <div class="space-y-1 px-4">
-                                <a href="{{ route('login') }}" class="block px-4 py-2 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md text-center transition duration-300 ease-in-out">Login</a>
-                                <a href="{{ route('register') }}" class="block px-4 py-2 text-base font-medium text-white bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 rounded-md text-center transition duration-300 ease-in-out shadow-md">Register</a>
+                                <a href="{{ route('login') }}" class="block px-4 py-2 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md text-center transition duration-300 ease-in-out">{{ __('messages.login') }}</a>
+                                <a href="{{ route('register') }}" class="block px-4 py-2 text-base font-medium text-white bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 rounded-md text-center transition duration-300 ease-in-out shadow-md">{{ __('messages.register') }}</a>
                             </div>
                         </div>
                     @endauth
@@ -249,37 +269,37 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div>
-                        <h3 class="text-lg font-semibold mb-4">About Us</h3>
+                        <h3 class="text-lg font-semibold mb-4">{{ __('messages.about_us') }}</h3>
                         <p class="text-gray-400">Your trusted multi-vendor e-commerce platform.</p>
                     </div>
                     <div>
-                        <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                        <h3 class="text-lg font-semibold mb-4">{{ __('messages.quick_links') }}</h3>
                         <ul class="space-y-2">
-                            <li><a href="{{ route('about') }}" class="text-gray-400 hover:text-white">About</a></li>
-                            <li><a href="{{ route('contact') }}" class="text-gray-400 hover:text-white">Contact</a></li>
+                            <li><a href="{{ route('about') }}" class="text-gray-400 hover:text-white">{{ __('messages.about') }}</a></li>
+                            <li><a href="{{ route('contact') }}" class="text-gray-400 hover:text-white">{{ __('messages.contact') }}</a></li>
                         </ul>
                     </div>
                     <div>
-                        <h3 class="text-lg font-semibold mb-4">Customer Service</h3>
+                        <h3 class="text-lg font-semibold mb-4">{{ __('messages.customer_service') }}</h3>
                         <ul class="space-y-2">
                             <li><a href="#" class="text-gray-400 hover:text-white">Help Center</a></li>
                             <li><a href="#" class="text-gray-400 hover:text-white">Returns</a></li>
                         </ul>
                     </div>
                     <div>
-                        <h3 class="text-lg font-semibold mb-4">Newsletter</h3>
+                        <h3 class="text-lg font-semibold mb-4">{{ __('messages.newsletter') }}</h3>
                         <form action="{{ route('newsletter.subscribe') }}" method="POST">
                             @csrf
                             <input type="email" name="email" placeholder="Your email"
                                    class="w-full px-3 py-2 text-gray-900 rounded-md" required />
                             <button type="submit" class="mt-2 w-full px-4 py-2 bg-gold-600 text-white rounded-md hover:bg-gold-700">
-                                Subscribe
+                                {{ __('messages.subscribe') }}
                             </button>
                         </form>
                     </div>
                 </div>
                 <div class="mt-8 pt-8 border-t border-gray-700 text-center text-gray-400">
-                    <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+                    <p>&copy; {{ date('Y') }} {{ config('app.name') }}. {{ __('messages.all_rights_reserved') }}</p>
                 </div>
             </div>
         </footer>

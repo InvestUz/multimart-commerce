@@ -21,6 +21,8 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Session;
 
 class HomeController extends Controller
 {
@@ -237,7 +239,9 @@ class HomeController extends Controller
 
     public function addresses()
     {
-        $addresses = auth()->user()->addresses()->get();
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        $addresses = $user->addresses()->get();
         return view('account.addresses', compact('addresses'));
     }
 
@@ -368,8 +372,15 @@ class HomeController extends Controller
             'email' => 'required|email|max:255|unique:users,email,' . auth()->id(),
             'phone' => 'nullable|string|max:20',
         ]);
-
-        auth()->user()->update($validated);
+        
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        if (isset($validated['phone'])) {
+            $user->phone = $validated['phone'];
+        }
+        $user->save();
 
         return back()->with('success', 'Profile updated successfully!');
     }
@@ -387,10 +398,24 @@ class HomeController extends Controller
         }
 
         // Update password
-        auth()->user()->update([
-            'password' => Hash::make($validated['password'])
-        ]);
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        $user->password = Hash::make($validated['password']);
+        $user->save();
 
         return back()->with('success', 'Password updated successfully!');
+    }
+
+    // Language switcher method
+    public function switchLanguage($locale)
+    {
+        // Validate locale
+        if (in_array($locale, ['en', 'ru', 'uz'])) {
+            Session::put('locale', $locale);
+            App::setLocale($locale);
+        }
+
+        // Redirect back to the previous page
+        return redirect()->back();
     }
 }

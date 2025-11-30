@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\App;
 
 class Product extends Model
 {
@@ -39,6 +40,13 @@ class Product extends Model
         'total_reviews',
         'views',
         'total_sales',
+        // Multilingual fields
+        'name_translations',
+        'description_translations',
+        'short_description_translations',
+        'meta_title_translations',
+        'meta_description_translations',
+        'meta_keywords_translations',
     ];
 
     protected $casts = [
@@ -56,6 +64,13 @@ class Product extends Model
         'total_reviews' => 'integer',
         'views' => 'integer',
         'total_sales' => 'integer',
+        // Multilingual casts
+        'name_translations' => 'array',
+        'description_translations' => 'array',
+        'short_description_translations' => 'array',
+        'meta_title_translations' => 'array',
+        'meta_description_translations' => 'array',
+        'meta_keywords_translations' => 'array',
     ];
 
     protected $appends = ['discount_amount', 'is_in_stock'];
@@ -263,6 +278,78 @@ class Product extends Model
     // Accessors
     // ============================================
 
+    public function getNameAttribute($value)
+    {
+        $locale = App::getLocale();
+        $translations = $this->name_translations;
+        
+        if ($translations && isset($translations[$locale])) {
+            return $translations[$locale];
+        }
+        
+        return $value;
+    }
+
+    public function getDescriptionAttribute($value)
+    {
+        $locale = App::getLocale();
+        $translations = $this->description_translations;
+        
+        if ($translations && isset($translations[$locale])) {
+            return $translations[$locale];
+        }
+        
+        return $value;
+    }
+
+    public function getShortDescriptionAttribute($value)
+    {
+        $locale = App::getLocale();
+        $translations = $this->short_description_translations;
+        
+        if ($translations && isset($translations[$locale])) {
+            return $translations[$locale];
+        }
+        
+        return $value;
+    }
+
+    public function getMetaTitleAttribute($value)
+    {
+        $locale = App::getLocale();
+        $translations = $this->meta_title_translations;
+        
+        if ($translations && isset($translations[$locale])) {
+            return $translations[$locale];
+        }
+        
+        return $value;
+    }
+
+    public function getMetaDescriptionAttribute($value)
+    {
+        $locale = App::getLocale();
+        $translations = $this->meta_description_translations;
+        
+        if ($translations && isset($translations[$locale])) {
+            return $translations[$locale];
+        }
+        
+        return $value;
+    }
+
+    public function getMetaKeywordsAttribute($value)
+    {
+        $locale = App::getLocale();
+        $translations = $this->meta_keywords_translations;
+        
+        if ($translations && isset($translations[$locale])) {
+            return $translations[$locale];
+        }
+        
+        return $value;
+    }
+
     public function getDiscountAmountAttribute()
     {
         if ($this->old_price && $this->old_price > $this->price) {
@@ -410,5 +497,56 @@ class Product extends Model
     public function getEffectivePrice(): float
     {
         return $this->getFlashSalePrice() ?? $this->price;
+    }
+
+    // ============================================
+    // Multilingual Methods
+    // ============================================
+
+    public function setNameTranslation(string $locale, string $value): void
+    {
+        $translations = $this->name_translations ?? [];
+        $translations[$locale] = $value;
+        $this->name_translations = $translations;
+    }
+
+    public function setDescriptionTranslation(string $locale, string $value): void
+    {
+        $translations = $this->description_translations ?? [];
+        $translations[$locale] = $value;
+        $this->description_translations = $translations;
+    }
+
+    public function setShortDescriptionTranslation(string $locale, string $value): void
+    {
+        $translations = $this->short_description_translations ?? [];
+        $translations[$locale] = $value;
+        $this->short_description_translations = $translations;
+    }
+
+    public function setMetaTitleTranslation(string $locale, string $value): void
+    {
+        $translations = $this->meta_title_translations ?? [];
+        $translations[$locale] = $value;
+        $this->meta_title_translations = $translations;
+    }
+
+    public function setMetaDescriptionTranslation(string $locale, string $value): void
+    {
+        $translations = $this->meta_description_translations ?? [];
+        $translations[$locale] = $value;
+        $this->meta_description_translations = $translations;
+    }
+
+    public function setMetaKeywordsTranslation(string $locale, string $value): void
+    {
+        $translations = $this->meta_keywords_translations ?? [];
+        $translations[$locale] = $value;
+        $this->meta_keywords_translations = $translations;
+    }
+
+    public function getAvailableLocales(): array
+    {
+        return ['en', 'ru', 'uz']; // Based on the language files in the project
     }
 }

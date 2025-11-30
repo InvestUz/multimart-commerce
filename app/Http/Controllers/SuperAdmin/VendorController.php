@@ -17,25 +17,29 @@ class VendorController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'store_name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'password' => 'required|string|min:8|confirmed',
-            'address' => 'nullable|string',
-            'is_active' => 'boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'store_name' => 'required|string|max:255',
+                'phone' => 'nullable|string|max:20',
+                'password' => 'required|string|min:8|confirmed',
+                'address' => 'nullable|string',
+                'is_active' => 'boolean',
+            ]);
 
-        $validated['password'] = Hash::make($validated['password']);
-        $validated['role'] = 'vendor';
-        $validated['email_verified_at'] = now();
-        $validated['is_active'] = $request->boolean('is_active', true);
+            $validated['password'] = Hash::make($validated['password']);
+            $validated['role'] = 'vendor';
+            $validated['email_verified_at'] = now();
+            $validated['is_active'] = $request->boolean('is_active', true);
 
-        $vendor = User::create($validated);
+            $vendor = User::create($validated);
 
-        return redirect()->route('super-admin.vendors.index')
-            ->with('success', 'Vendor created successfully!');
+            return redirect()->route('super-admin.vendors.index')
+                ->with('success', __('Vendor created successfully!'));
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', __('Failed to create vendor: ') . $e->getMessage());
+        }
     }
 
     public function index(Request $request)
@@ -114,7 +118,7 @@ class VendorController extends Controller
             'is_active' => !$vendor->is_active
         ]);
 
-        return back()->with('success', 'Vendor status updated successfully!');
+        return back()->with('success', __('Vendor status updated successfully!'));
     }
 
     public function approve(User $vendor)
@@ -128,7 +132,7 @@ class VendorController extends Controller
             'email_verified_at' => now()
         ]);
 
-        return back()->with('success', 'Vendor approved successfully!');
+        return back()->with('success', __('Vendor approved successfully!'));
     }
 
     public function destroy(User $vendor)
@@ -141,7 +145,7 @@ class VendorController extends Controller
         $hasOrders = $vendor->vendorOrderItems()->exists();
 
         if ($hasOrders) {
-            return back()->with('error', 'Cannot delete vendor with existing orders. Deactivate instead.');
+            return back()->with('error', __('Cannot delete vendor with existing orders. Deactivate instead.'));
         }
 
         // Delete vendor's products
@@ -151,7 +155,7 @@ class VendorController extends Controller
         $vendor->delete();
 
         return redirect()->route('super-admin.vendors.index')
-            ->with('success', 'Vendor deleted successfully!');
+            ->with('success', __('Vendor deleted successfully!'));
     }
 
     public function edit(User $vendor)
@@ -191,6 +195,6 @@ class VendorController extends Controller
         $vendor->update($validated);
 
         return redirect()->route('super-admin.vendors.show', $vendor)
-            ->with('success', 'Vendor updated successfully!');
+            ->with('success', __('Vendor updated successfully!'));
     }
 }

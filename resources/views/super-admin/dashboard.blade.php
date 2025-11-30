@@ -1,13 +1,13 @@
 @extends('layouts.admin')
 
-@section('title', 'Super Admin Dashboard')
+@section('title', __('Super Admin Dashboard'))
 
 @section('content')
 <div class="p-6">
     <!-- Page Header -->
     <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p class="text-gray-600 mt-1">Welcome back! Here's what's happening with your store today.</p>
+        <h1 class="text-3xl font-bold text-gray-900">@lang('Dashboard')</h1>
+        <p class="text-gray-600 mt-1">@lang('Welcome back! Here\'s what\'s happening with your store today.')</p>
     </div>
 
     <!-- Stats Cards -->
@@ -16,7 +16,7 @@
         <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600 mb-1">Total Revenue</p>
+                    <p class="text-sm text-gray-600 mb-1">@lang('Total Revenue')</p>
                     <p class="text-2xl font-bold text-gray-900">${{ number_format($totalRevenue, 2) }}</p>
                 </div>
                 <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -31,7 +31,7 @@
         <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600 mb-1">Total Orders</p>
+                    <p class="text-sm text-gray-600 mb-1">@lang('Total Orders')</p>
                     <p class="text-2xl font-bold text-gray-900">{{ number_format($totalOrders) }}</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -46,7 +46,7 @@
         <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600 mb-1">Total Products</p>
+                    <p class="text-sm text-gray-600 mb-1">@lang('Total Products')</p>
                     <p class="text-2xl font-bold text-gray-900">{{ number_format($totalProducts) }}</p>
                 </div>
                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -61,7 +61,7 @@
         <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600 mb-1">Total Vendors</p>
+                    <p class="text-sm text-gray-600 mb-1">@lang('Total Vendors')</p>
                     <p class="text-2xl font-bold text-gray-900">{{ number_format($totalVendors) }}</p>
                 </div>
                 <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -76,7 +76,7 @@
         <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600 mb-1">Total Customers</p>
+                    <p class="text-sm text-gray-600 mb-1">@lang('Total Customers')</p>
                     <p class="text-2xl font-bold text-gray-900">{{ number_format($totalCustomers) }}</p>
                 </div>
                 <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
@@ -91,7 +91,7 @@
         <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600 mb-1">Pending Orders</p>
+                    <p class="text-sm text-gray-600 mb-1">@lang('Pending Orders')</p>
                     <p class="text-2xl font-bold text-gray-900">{{ number_format($pendingOrders) }}</p>
                 </div>
                 <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -106,28 +106,28 @@
     <!-- Quick Actions -->
     <div class="mb-6">
         <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">@lang('Quick Actions')</h2>
             <div class="flex flex-wrap gap-3">
                 <a href="{{ route('super-admin.banners.create') }}" 
                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    Create Banner
+                    @lang('Create Banner')
                 </a>
                 <a href="{{ route('super-admin.products.create') }}" 
                    class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Add Product
+                    @lang('Add Product')
                 </a>
                 <a href="{{ route('super-admin.categories.create') }}" 
                    class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Add Category
+                    @lang('Add Category')
                 </a>
             </div>
         </div>
@@ -136,7 +136,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <!-- Order Status Distribution -->
         <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Order Status Distribution</h2>
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">@lang('Order Status Distribution')</h2>
             <div class="space-y-3">
                 @foreach($orderStatusDistribution as $status)
                     @php
@@ -165,7 +165,7 @@
 
         <!-- Top Vendors -->
         <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Top Vendors</h2>
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">@lang('Top Vendors')</h2>
             <div class="space-y-4">
                 @forelse($topVendors as $vendor)
                     <div class="flex items-center justify-between">
@@ -175,7 +175,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-gray-900">{{ $vendor->name }}</p>
-                                <p class="text-xs text-gray-500">{{ $vendor->products_count }} products</p>
+                                <p class="text-xs text-gray-500">@lang(':count products', ['count' => $vendor->products_count])</p>
                             </div>
                         </div>
                         <div class="text-right">
@@ -183,7 +183,7 @@
                         </div>
                     </div>
                 @empty
-                    <p class="text-sm text-gray-500 text-center py-4">No vendors yet</p>
+                    <p class="text-sm text-gray-500 text-center py-4">@lang('No vendors yet')</p>
                 @endforelse
             </div>
         </div>
@@ -194,16 +194,16 @@
         <!-- Recent Orders -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
             <div class="p-6 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Recent Orders</h2>
+                <h2 class="text-lg font-semibold text-gray-900">@lang('Recent Orders')</h2>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order #</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">@lang('Order #')</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">@lang('Customer')</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">@lang('Total')</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">@lang('Status')</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -226,7 +226,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-8 text-center text-sm text-gray-500">No orders yet</td>
+                                <td colspan="4" class="px-6 py-8 text-center text-sm text-gray-500">@lang('No orders yet')</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -237,7 +237,7 @@
         <!-- Top Products -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
             <div class="p-6 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Top Products</h2>
+                <h2 class="text-lg font-semibold text-gray-900">@lang('Top Products')</h2>
             </div>
             <div class="p-6">
                 <div class="space-y-4">
@@ -262,11 +262,11 @@
                             </div>
                             <div class="text-right">
                                 <p class="text-sm font-semibold text-gray-900">${{ number_format($product->price, 2) }}</p>
-                                <p class="text-xs text-gray-500">{{ $product->order_items_count }} sales</p>
+                                <p class="text-xs text-gray-500">@lang(':count sales', ['count' => $product->order_items_count])</p>
                             </div>
                         </div>
                     @empty
-                        <p class="text-sm text-gray-500 text-center py-4">No products yet</p>
+                        <p class="text-sm text-gray-500 text-center py-4">@lang('No products yet')</p>
                     @endforelse
                 </div>
             </div>
