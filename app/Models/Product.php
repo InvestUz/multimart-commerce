@@ -21,7 +21,10 @@ class Product extends Model
         'name',
         'slug',
         'description',
+        'short_description',
         'price',
+        'compare_price',
+        'cost_price',
         'old_price',
         'discount_percentage',
         'stock',
@@ -29,6 +32,7 @@ class Product extends Model
         'sizes',
         'colors',
         'specifications',
+        'tags',
         'brand',
         'model',
         'condition',
@@ -40,6 +44,9 @@ class Product extends Model
         'total_reviews',
         'views',
         'total_sales',
+        'meta_title',
+        'meta_description',
+        'meta_keywords',
         // Multilingual fields
         'name_translations',
         'description_translations',
@@ -282,11 +289,11 @@ class Product extends Model
     {
         $locale = App::getLocale();
         $translations = $this->name_translations;
-        
+
         if ($translations && isset($translations[$locale])) {
             return $translations[$locale];
         }
-        
+
         return $value;
     }
 
@@ -294,11 +301,11 @@ class Product extends Model
     {
         $locale = App::getLocale();
         $translations = $this->description_translations;
-        
+
         if ($translations && isset($translations[$locale])) {
             return $translations[$locale];
         }
-        
+
         return $value;
     }
 
@@ -306,11 +313,11 @@ class Product extends Model
     {
         $locale = App::getLocale();
         $translations = $this->short_description_translations;
-        
+
         if ($translations && isset($translations[$locale])) {
             return $translations[$locale];
         }
-        
+
         return $value;
     }
 
@@ -318,11 +325,11 @@ class Product extends Model
     {
         $locale = App::getLocale();
         $translations = $this->meta_title_translations;
-        
+
         if ($translations && isset($translations[$locale])) {
             return $translations[$locale];
         }
-        
+
         return $value;
     }
 
@@ -330,11 +337,11 @@ class Product extends Model
     {
         $locale = App::getLocale();
         $translations = $this->meta_description_translations;
-        
+
         if ($translations && isset($translations[$locale])) {
             return $translations[$locale];
         }
-        
+
         return $value;
     }
 
@@ -342,11 +349,11 @@ class Product extends Model
     {
         $locale = App::getLocale();
         $translations = $this->meta_keywords_translations;
-        
+
         if ($translations && isset($translations[$locale])) {
             return $translations[$locale];
         }
-        
+
         return $value;
     }
 

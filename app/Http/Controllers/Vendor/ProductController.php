@@ -92,7 +92,17 @@ class ProductController extends Controller
             $validated['slug'] = Str::slug($validated['name']);
         }
 
-        $validated['vendor_id'] = auth()->id();
+        // Set user_id (vendor_id column is actually user_id)
+        $validated['user_id'] = auth()->id();
+
+        // Remove fields that don't exist in the table or will be handled separately
+        unset($validated['images']);
+        unset($validated['name_translations']);
+        unset($validated['description_translations']);
+        unset($validated['short_description_translations']);
+        unset($validated['meta_title_translations']);
+        unset($validated['meta_description_translations']);
+        unset($validated['meta_keywords_translations']);
 
         DB::beginTransaction();
         try {
@@ -104,28 +114,28 @@ class ProductController extends Controller
                 if ($request->filled("name_translations.$locale")) {
                     $product->setNameTranslation($locale, $request->input("name_translations.$locale"));
                 }
-                
+
                 if ($request->filled("description_translations.$locale")) {
                     $product->setDescriptionTranslation($locale, $request->input("description_translations.$locale"));
                 }
-                
+
                 if ($request->filled("short_description_translations.$locale")) {
                     $product->setShortDescriptionTranslation($locale, $request->input("short_description_translations.$locale"));
                 }
-                
+
                 if ($request->filled("meta_title_translations.$locale")) {
                     $product->setMetaTitleTranslation($locale, $request->input("meta_title_translations.$locale"));
                 }
-                
+
                 if ($request->filled("meta_description_translations.$locale")) {
                     $product->setMetaDescriptionTranslation($locale, $request->input("meta_description_translations.$locale"));
                 }
-                
+
                 if ($request->filled("meta_keywords_translations.$locale")) {
                     $product->setMetaKeywordsTranslation($locale, $request->input("meta_keywords_translations.$locale"));
                 }
             }
-            
+
             // Save the translations
             $product->save();
 
@@ -225,6 +235,15 @@ class ProductController extends Controller
             $validated['slug'] = Str::slug($validated['name']);
         }
 
+        // Remove fields that don't exist in the table or will be handled separately
+        unset($validated['images']);
+        unset($validated['name_translations']);
+        unset($validated['description_translations']);
+        unset($validated['short_description_translations']);
+        unset($validated['meta_title_translations']);
+        unset($validated['meta_description_translations']);
+        unset($validated['meta_keywords_translations']);
+
         DB::beginTransaction();
         try {
             $product->update($validated);
@@ -235,28 +254,28 @@ class ProductController extends Controller
                 if ($request->filled("name_translations.$locale")) {
                     $product->setNameTranslation($locale, $request->input("name_translations.$locale"));
                 }
-                
+
                 if ($request->filled("description_translations.$locale")) {
                     $product->setDescriptionTranslation($locale, $request->input("description_translations.$locale"));
                 }
-                
+
                 if ($request->filled("short_description_translations.$locale")) {
                     $product->setShortDescriptionTranslation($locale, $request->input("short_description_translations.$locale"));
                 }
-                
+
                 if ($request->filled("meta_title_translations.$locale")) {
                     $product->setMetaTitleTranslation($locale, $request->input("meta_title_translations.$locale"));
                 }
-                
+
                 if ($request->filled("meta_description_translations.$locale")) {
                     $product->setMetaDescriptionTranslation($locale, $request->input("meta_description_translations.$locale"));
                 }
-                
+
                 if ($request->filled("meta_keywords_translations.$locale")) {
                     $product->setMetaKeywordsTranslation($locale, $request->input("meta_keywords_translations.$locale"));
                 }
             }
-            
+
             // Save the translations
             $product->save();
 
