@@ -11,7 +11,7 @@ use App\Models\Order;
 use App\Models\Address;
 use App\Models\Notification;
 use App\Models\SupportTicket;
-use App\Models\TicketReply;
+use App\Models\SupportTicketReply;
 use App\Models\Refund;
 use App\Models\Page;
 use App\Models\NewsletterSubscriber;
@@ -360,8 +360,33 @@ class HomeController extends Controller
         return response()->json($address);
     }
 
-    public function profile()
+    public function setDefaultAddress(UserAddress $address)
     {
+        // Ensure the address belongs to the authenticated user
+        if ($address->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        try {
+            // Use the makeDefault method from the UserAddress model
+            $address->makeDefault();
+
+            // Check if this is a JSON request (for AJAX)
+            if (request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Address set as default successfully!']);
+            }
+
+            return back()->with('success', 'Address set as default successfully!');
+        } catch (\Exception $e) {
+            // Check if this is a JSON request (for AJAX)
+            if (request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to set address as default: ' . $e->getMessage()]);
+            }
+            return back()->with('error', 'Failed to set address as default: ' . $e->getMessage());
+        }
+    }
+
+    public function profile()    {
         return view('account.profile');
     }
 
@@ -417,5 +442,196 @@ class HomeController extends Controller
 
         // Redirect back to the previous page
         return redirect()->back();
+    }
+
+    // Notifications methods
+    public function notifications()
+    {
+        $notifications = auth()->user()->notifications()->latest()->paginate(10);
+        return view('account.notifications', compact('notifications'));
+    }
+
+    public function markAsRead($notificationId)
+    {
+        $notification = auth()->user()->notifications()->find($notificationId);
+        if ($notification) {
+            $notification->markAsRead();
+        }
+        return response()->json(['success' => true]);
+    }
+
+    public function markAllAsRead()
+    {
+        auth()->user()->unreadNotifications()->update(['read_at' => now()]);
+        return back()->with('success', 'All notifications marked as read.');
+    }
+
+    // Support Ticket methods
+    public function tickets()
+    {
+        $tickets = auth()->user()->supportTickets()->latest()->paginate(10);
+        return view('account.tickets.index', compact('tickets'));
+    }
+
+    public function createTicket()
+    {
+        return view('account.tickets.create');
+    }
+
+    public function storeTicket(Request $request)
+    {
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
+            'priority' => 'required|in:low,medium,high',
+        ]);
+
+        $ticket = new SupportTicket();
+        $ticket->user_id = auth()->id();
+        $ticket->subject = $validated['subject'];
+        $ticket->message = $validated['message'];
+        $ticket->priority = $validated['priority'];
+        $ticket->status = 'open';
+        $ticket->save();
+
+        return redirect()->route('account.tickets.index')->with('success', 'Ticket submitted successfully.');
+    }
+
+    public function showTicket(SupportTicket $ticket)
+    {
+        // Ensure the ticket belongs to the authenticated user
+        if ($ticket->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $replies = $ticket->replies()->with('user')->latest()->get();
+        return view('account.tickets.show', compact('ticket', 'replies'));
+    }
+
+    public function replyTicket(Request $request, SupportTicket $ticket)
+    {
+        // Ensure the ticket belongs to the authenticated user
+        if ($ticket->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'message' => 'required|string',
+        ]);
+
+        $reply = new SupportTicketReply();
+        $reply->ticket_id = $ticket->id;
+        $reply->user_id = auth()->id();
+        $reply->message = $validated['message'];
+        $reply->is_staff_reply = false;
+        $reply->save();
+
+        // Update ticket status to 'customer_reply'
+        $ticket->status = 'customer_reply';
+        $ticket->save();
+
+        return back()->with('success', 'Reply submitted successfully.');
+    }
+
+    // Refund methods
+    public function refunds()
+    {
+        $refunds = auth()->user()->refunds()->with('order')->latest()->paginate(10);
+        return view('account.refunds.index', compact('refunds'));
+    }
+
+    public function createRefund(Order $order)
+    {
+        // Ensure the order belongs to the authenticated user
+        if ($order->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Check if refund already exists for this order
+        if ($order->refund) {
+            return redirect()->route('account.refunds.index')->with('error', 'A refund request already exists for this order.');
+        }
+
+        return view('account.refunds.create', compact('order'));
+    }
+
+    public function storeRefund(Request $request)
+    {
+        $validated = $request->validate([
+            'order_id' => 'required|exists:orders,id',
+            'reason' => 'required|string|max:500',
+            'amount' => 'required|numeric|min:0',
+        ]);
+
+        $order = Order::findOrFail($validated['order_id']);
+
+        // Ensure the order belongs to the authenticated user
+        if ($order->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Check if refund already exists for this order
+        if ($order->refund) {
+            return redirect()->route('account.refunds.index')->with('error', 'A refund request already exists for this order.');
+        }
+
+        $refund = new Refund();
+        $refund->user_id = auth()->id();
+        $refund->order_id = $order->id;
+        $refund->reason = $validated['reason'];
+        $refund->amount = $validated['amount'];
+        $refund->status = 'pending';
+        $refund->save();
+
+        return redirect()->route('account.refunds.index')->with('success', 'Refund request submitted successfully.');
+    }
+
+    public function showRefund(Refund $refund)
+    {
+        // Ensure the refund belongs to the authenticated user
+        if ($refund->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        return view('account.refunds.show', compact('refund'));
+    }
+
+    // Newsletter subscription methods
+    public function newsletterSubscribe(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|unique:newsletter_subscribers,email',
+        ]);
+
+        $subscriber = new NewsletterSubscriber();
+        $subscriber->email = $validated['email'];
+        $subscriber->token = Str::random(32);
+        $subscriber->is_active = true;
+        $subscriber->save();
+
+        return back()->with('success', 'You have been subscribed to our newsletter successfully.');
+    }
+
+    public function newsletterUnsubscribe($token)
+    {
+        $subscriber = NewsletterSubscriber::where('token', $token)->first();
+
+        if (!$subscriber) {
+            return redirect()->route('home')->with('error', 'Invalid unsubscribe link.');
+        }
+
+        $subscriber->delete();
+
+        return redirect()->route('home')->with('success', 'You have been unsubscribed from our newsletter.');
+    }
+
+    // CMS Page method
+    public function page($slug)
+    {
+        $page = Page::where('slug', $slug)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        return view('page', compact('page'));
     }
 }

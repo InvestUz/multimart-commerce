@@ -107,6 +107,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/addresses/{address}/edit', [HomeController::class, 'editAddress'])->name('addresses.edit');
         Route::put('/addresses/{address}', [HomeController::class, 'updateAddress'])->name('addresses.update');
         Route::delete('/addresses/{address}', [HomeController::class, 'deleteAddress'])->name('addresses.destroy');
+        Route::put('/addresses/{address}/default', [HomeController::class, 'setDefaultAddress'])->name('addresses.set-default');
     });
 });
 

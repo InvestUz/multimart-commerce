@@ -28,7 +28,7 @@ return new class extends Migration
             $table->decimal('tax', 12, 2)->default(0);
             $table->decimal('discount', 12, 2)->default(0);
             $table->decimal('total', 12, 2);
-            $table->enum('payment_method', ['cash_on_delivery', 'credit_card', 'paypal', 'bank_transfer'])->default('cash_on_delivery');
+            $table->enum('payment_method', ['cash_on_delivery', 'credit_card', 'paypal', 'bank_transfer', 'Uzum', 'Click'])->default('cash_on_delivery');
             $table->enum('payment_status', ['pending', 'paid', 'failed', 'refunded'])->default('pending');
             $table->enum('status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'])->default('pending');
             $table->text('notes')->nullable();
