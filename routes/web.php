@@ -7,6 +7,7 @@ use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SuperAdmin;
+use App\Http\Controllers\SuperAdmin\DashboardController;
 use App\Http\Controllers\Vendor;
 use App\Models\SubCategory;
 use App\Models\Product;
@@ -506,6 +507,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{notification}/read', [HomeController::class, 'markAsRead'])->name('read');
         Route::post('/read-all', [HomeController::class, 'markAllAsRead'])->name('read-all');
     });
+    
+    // Notifications API (for AJAX requests)
+    Route::get('/api/notifications', [DashboardController::class, 'notifications'])->name('api.notifications');
 
     // Support Tickets (Customer)
     Route::prefix('tickets')->name('tickets.')->group(function () {
@@ -527,9 +531,11 @@ Route::middleware(['auth'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Dashboard Redirect Route
+| Notifications API Routes (for AJAX)
 |--------------------------------------------------------------------------
 */
+
+Route::get('/notifications', [DashboardController::class, 'notifications'])->middleware('auth')->name('api.notifications.fetch');
 
 Route::get('/dashboard', function () {
     $user = auth()->user();
