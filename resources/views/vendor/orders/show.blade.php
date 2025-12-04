@@ -11,6 +11,10 @@
         </a>
     </div>
 
+    @php
+        $vendorStatus = $order->items->first()->vendor_status;
+    @endphp
+
     <div class="bg-white rounded-lg shadow-sm overflow-hidden">
         <!-- Order Header -->
         <div class="px-6 py-4 border-b border-gray-200">
@@ -20,15 +24,16 @@
                     <p class="text-gray-600 mt-1">Placed on {{ $order->created_at->format('M d, Y g:i A') }}</p>
                 </div>
                 <div class="mt-4 md:mt-0">
+                    @endphp
                     <span class="px-3 py-1 rounded-full text-sm font-medium
-                        @if($order->status === 'pending') bg-yellow-100 text-yellow-800
-                        @elseif($order->status === 'processing') bg-blue-100 text-blue-800
-                        @elseif($order->status === 'shipped') bg-indigo-100 text-indigo-800
-                        @elseif($order->status === 'delivered') bg-green-100 text-green-800
-                        @elseif($order->status === 'cancelled') bg-red-100 text-red-800
+                        @if($vendorStatus === 'pending') bg-yellow-100 text-yellow-800
+                        @elseif($vendorStatus === 'processing') bg-blue-100 text-blue-800
+                        @elseif($vendorStatus === 'shipped') bg-indigo-100 text-indigo-800
+                        @elseif($vendorStatus === 'delivered') bg-green-100 text-green-800
+                        @elseif($vendorStatus === 'cancelled') bg-red-100 text-red-800
                         @else bg-gray-100 text-gray-800
                         @endif">
-                        {{ ucfirst($order->status) }}
+                        {{ ucfirst($vendorStatus) }}
                     </span>
                 </div>
             </div>
@@ -163,17 +168,17 @@
                 <!-- Order Status Update -->
                 <div class="bg-white border border-gray-200 rounded-lg p-4">
                     <h3 class="text-lg font-medium text-gray-900 mb-3">Update Order Status</h3>
-                    <form method="POST" action="{{ route('vendor.orders.update-status', $order) }}">
+                    <form id="update-status-form">
                         @csrf
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="processing" {{ $order->status === 'processing' ? 'selected' : '' }}>Processing</option>
-                                    <option value="shipped" {{ $order->status === 'shipped' ? 'selected' : '' }}>Shipped</option>
-                                    <option value="delivered" {{ $order->status === 'delivered' ? 'selected' : '' }}>Delivered</option>
-                                    <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                <select name="status" id="order-status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="pending" {{ $order->items->first()->vendor_status === 'pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="processing" {{ $order->items->first()->vendor_status === 'processing' ? 'selected' : '' }}>Processing</option>
+                                    <option value="shipped" {{ $order->items->first()->vendor_status === 'shipped' ? 'selected' : '' }}>Shipped</option>
+                                    <option value="delivered" {{ $order->items->first()->vendor_status === 'delivered' ? 'selected' : '' }}>Delivered</option>
+                                    <option value="cancelled" {{ $order->items->first()->vendor_status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                                 </select>
                             </div>
                             <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -182,8 +187,133 @@
                         </div>
                     </form>
                 </div>
+
+                <!-- Mark as Shipped -->
+                @if($order->items->first()->vendor_status === 'processing')
+                <div class="bg-white border border-gray-200 rounded-lg p-4 mt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-3">Mark as Shipped</h3>
+                    <form id="ship-order-form">
+                        @csrf
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tracking Number</label>
+                                <input type="text" name="tracking_number" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="Enter tracking number">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Carrier</label>
+                                <input type="text" name="carrier" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="Enter carrier name">
+                            </div>
+                            <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                Mark as Shipped
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                @endif
             </div>
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+// Update Order Status
+document.getElementById('update-status-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const status = document.getElementById('order-status').value;
+    const button = this.querySelector('button[type="submit"]');
+    const originalText = button.textContent;
+    
+    button.disabled = true;
+    button.textContent = 'Updating...';
+    
+    try {
+        const response = await fetch('{{ route('vendor.orders.update-status', $order) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ status: status })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Show success message
+            showNotification('success', data.message);
+            // Reload page to see changes
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification('error', data.message || 'Failed to update status');
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('error', 'An error occurred. Please try again.');
+        button.disabled = false;
+        button.textContent = originalText;
+    }
+});
+
+// Ship Order
+document.getElementById('ship-order-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const button = this.querySelector('button[type="submit"]');
+    const originalText = button.textContent;
+    
+    button.disabled = true;
+    button.textContent = 'Shipping...';
+    
+    try {
+        const response = await fetch('{{ route('vendor.orders.ship', $order) }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('success', data.message);
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification('error', data.message || 'Failed to ship order');
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('error', 'An error occurred. Please try again.');
+        button.disabled = false;
+        button.textContent = originalText;
+    }
+});
+
+// Notification function
+function showNotification(type, message) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+@endpush
 @endsection

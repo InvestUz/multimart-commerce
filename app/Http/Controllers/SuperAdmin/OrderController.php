@@ -56,8 +56,8 @@ class OrderController extends Controller
 
         $order->update(['status' => $validated['status']]);
 
-        // Update all order items status
-        $order->items()->update(['status' => $validated['status']]);
+        // Update all order items vendor_status
+        $order->items()->update(['vendor_status' => $validated['status']]);
 
         return response()->json([
             'success' => true,

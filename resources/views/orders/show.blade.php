@@ -88,23 +88,34 @@
                     
                     <div class="flex justify-between">
                         <span class="text-gray-600">Tax</span>
-                        <span class="font-medium">${{ number_format($order->tax_amount, 2) }}</span>
+                        <span class="font-medium">${{ number_format($order->tax, 2) }}</span>
                     </div>
                     
                     <div class="border-t border-gray-200 pt-3 flex justify-between">
                         <span class="text-base font-medium text-gray-900">Total</span>
-                        <span class="text-base font-medium text-gray-900">${{ number_format($order->total_amount, 2) }}</span>
+                        <span class="text-base font-medium text-gray-900">${{ number_format($order->total, 2) }}</span>
                     </div>
                 </div>
 
                 <!-- Shipping Address -->
                 <h3 class="text-lg font-medium text-gray-900 mt-6 mb-4">Shipping Address</h3>
                 <div class="bg-gray-50 rounded-lg p-4">
-                    <p class="font-medium">{{ $order->shippingAddress->name ?? auth()->user()->name }}</p>
-                    <p class="text-gray-600">{{ $order->shippingAddress->address }}</p>
-                    <p class="text-gray-600">{{ $order->shippingAddress->city }}, {{ $order->shippingAddress->state }} {{ $order->shippingAddress->postal_code }}</p>
-                    <p class="text-gray-600">{{ $order->shippingAddress->country }}</p>
-                    <p class="text-gray-600 mt-2">{{ $order->shippingAddress->phone }}</p>
+                    @if($order->shippingAddress)
+                        <p class="font-medium">{{ $order->shippingAddress->full_name }}</p>
+                        <p class="text-gray-600">{{ $order->shippingAddress->address_line1 }}</p>
+                        @if($order->shippingAddress->address_line2)
+                            <p class="text-gray-600">{{ $order->shippingAddress->address_line2 }}</p>
+                        @endif
+                        <p class="text-gray-600">{{ $order->shippingAddress->city }}, {{ $order->shippingAddress->state }} {{ $order->shippingAddress->postal_code }}</p>
+                        <p class="text-gray-600">{{ $order->shippingAddress->country }}</p>
+                        <p class="text-gray-600 mt-2">{{ $order->shippingAddress->phone }}</p>
+                    @else
+                        <p class="font-medium">{{ $order->customer_name }}</p>
+                        <p class="text-gray-600">{{ $order->shipping_address }}</p>
+                        <p class="text-gray-600">{{ $order->city }}, {{ $order->state }} {{ $order->postal_code }}</p>
+                        <p class="text-gray-600">{{ $order->country }}</p>
+                        <p class="text-gray-600 mt-2">{{ $order->customer_phone }}</p>
+                    @endif
                 </div>
 
                 <!-- Payment Information -->

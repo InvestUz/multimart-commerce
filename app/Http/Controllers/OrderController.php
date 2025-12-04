@@ -206,18 +206,26 @@ class OrderController extends Controller
             if ($coupon) {
                 $coupon->increment('used_count');
                 
-                // Notify admins about coupon usage
-                $admins = User::where('role', 'super_admin')->get();
-                foreach ($admins as $admin) {
-                    $admin->notify(new \App\Notifications\CouponUsed($order, $coupon));
+                // Notify admins about coupon usage (non-blocking)
+                try {
+                    $admins = User::where('role', 'super_admin')->get();
+                    foreach ($admins as $admin) {
+                        $admin->notify(new \App\Notifications\CouponUsed($order, $coupon));
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to send coupon notification: ' . $e->getMessage());
                 }
             }
 
             // Clear cart
             $user->cart()->delete();
 
-            // Send notification to admins and vendors
-            $this->notifyAdminsAndVendors($order);
+            // Send notification to admins and vendors (non-blocking)
+            try {
+                $this->notifyAdminsAndVendors($order);
+            } catch (\Exception $e) {
+                \Log::warning('Failed to send order notifications: ' . $e->getMessage());
+            }
 
             DB::commit();
 

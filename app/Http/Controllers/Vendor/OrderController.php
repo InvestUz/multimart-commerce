@@ -11,7 +11,7 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = auth()->user()->vendorOrderItems()
+        $query = OrderItem::where('vendor_id', auth()->id())
             ->with(['order.user', 'product.images']);
 
         if ($request->filled('status')) {
@@ -47,12 +47,17 @@ class OrderController extends Controller
         return view('vendor.orders.show', compact('order'));
     }
 
-    public function updateStatus(Request $request, OrderItem $orderItem)
+    public function updateStatus(Request $request, Order $order)
     {
-        if ($orderItem->vendor_id !== auth()->id()) {
+        // Verify vendor has items in this order
+        $hasItems = $order->items()
+            ->where('vendor_id', auth()->id())
+            ->exists();
+
+        if (!$hasItems) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized'
+                'message' => 'Unauthorized access'
             ], 403);
         }
 
@@ -60,7 +65,10 @@ class OrderController extends Controller
             'status' => 'required|in:pending,processing,shipped,delivered,cancelled'
         ]);
 
-        $orderItem->update(['status' => $validated['status']]);
+        // Update vendor_status for all items belonging to this vendor in this order
+        $order->items()
+            ->where('vendor_id', auth()->id())
+            ->update(['vendor_status' => $validated['status']]);
 
         return response()->json([
             'success' => true,
@@ -70,6 +78,18 @@ class OrderController extends Controller
 
     public function ship(Request $request, Order $order)
     {
+        // Verify vendor has items in this order
+        $hasItems = $order->items()
+            ->where('vendor_id', auth()->id())
+            ->exists();
+
+        if (!$hasItems) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized access'
+            ], 403);
+        }
+
         $validated = $request->validate([
             'tracking_number' => 'required|string|max:255',
             'carrier' => 'required|string|max:255',
@@ -80,17 +100,23 @@ class OrderController extends Controller
             ->get();
 
         if ($orderItems->isEmpty()) {
-            return back()->with('error', 'No items found for this vendor.');
+            return response()->json([
+                'success' => false,
+                'message' => 'No items found for this vendor.'
+            ], 400);
         }
 
         foreach ($orderItems as $item) {
             $item->update([
-                'status' => 'shipped',
+                'vendor_status' => 'shipped',
                 'tracking_number' => $validated['tracking_number'],
                 'carrier' => $validated['carrier'],
             ]);
         }
 
-        return back()->with('success', 'Order marked as shipped!');
+        return response()->json([
+            'success' => true,
+            'message' => 'Order marked as shipped!'
+        ]);
     }
 }

@@ -137,11 +137,11 @@
                 <!-- Order Actions -->
                 <h3 class="text-lg font-medium text-gray-900 mt-6 mb-4">Order Actions</h3>
                 <div class="bg-gray-50 rounded-lg p-4">
-                    <form method="POST" action="{{ route('super-admin.orders.update-status', $order) }}" class="mb-3">
+                    <form id="update-status-form" class="mb-3">
                         @csrf
                         <label class="block text-sm font-medium text-gray-700 mb-1">Update Status</label>
                         <div class="flex space-x-2">
-                            <select name="status" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <select name="status" id="order-status" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Pending</option>
                                 <option value="processing" {{ $order->status === 'processing' ? 'selected' : '' }}>Processing</option>
                                 <option value="shipped" {{ $order->status === 'shipped' ? 'selected' : '' }}>Shipped</option>
@@ -154,11 +154,11 @@
                         </div>
                     </form>
                     
-                    <form method="POST" action="{{ route('super-admin.orders.update-payment', $order) }}">
+                    <form id="update-payment-form">
                         @csrf
                         <label class="block text-sm font-medium text-gray-700 mb-1">Update Payment Status</label>
                         <div class="flex space-x-2">
-                            <select name="payment_status" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <select name="payment_status" id="payment-status" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="pending" {{ $order->payment_status === 'pending' ? 'selected' : '' }}>Pending</option>
                                 <option value="paid" {{ $order->payment_status === 'paid' ? 'selected' : '' }}>Paid</option>
                                 <option value="failed" {{ $order->payment_status === 'failed' ? 'selected' : '' }}>Failed</option>
@@ -174,4 +174,103 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+// Update Order Status
+document.getElementById('update-status-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const status = document.getElementById('order-status').value;
+    const button = this.querySelector('button[type="submit"]');
+    const originalText = button.textContent;
+    
+    button.disabled = true;
+    button.textContent = 'Updating...';
+    
+    try {
+        const response = await fetch('{{ route('super-admin.orders.update-status', $order) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ status: status })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Show success message
+            showNotification('success', data.message);
+            // Reload page to see changes
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification('error', data.message || 'Failed to update status');
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('error', 'An error occurred. Please try again.');
+        button.disabled = false;
+        button.textContent = originalText;
+    }
+});
+
+// Update Payment Status
+document.getElementById('update-payment-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const paymentStatus = document.getElementById('payment-status').value;
+    const button = this.querySelector('button[type="submit"]');
+    const originalText = button.textContent;
+    
+    button.disabled = true;
+    button.textContent = 'Updating...';
+    
+    try {
+        const response = await fetch('{{ route('super-admin.orders.update-payment', $order) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ payment_status: paymentStatus })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('success', data.message);
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification('error', data.message || 'Failed to update payment status');
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('error', 'An error occurred. Please try again.');
+        button.disabled = false;
+        button.textContent = originalText;
+    }
+});
+
+// Notification function
+function showNotification(type, message) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+@endpush
 @endsection
