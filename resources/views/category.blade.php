@@ -122,9 +122,9 @@
 
                 <!-- Products -->
                 @if($products->isNotEmpty())
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                     @foreach($products as $product)
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition group">
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition group h-full flex flex-col">
                         <a href="{{ route('product.show', $product->slug) }}" class="block relative">
                             @if($product->images->first())
                             <img src="{{ asset('storage/' . $product->images->first()->image_path) }}"

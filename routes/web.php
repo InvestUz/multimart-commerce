@@ -302,7 +302,7 @@ Route::prefix('vendor')->name('vendor.')->middleware(['auth', 'vendor'])->group(
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', [Vendor\OrderController::class, 'index'])->name('index');
         Route::get('/{order}', [Vendor\OrderController::class, 'show'])->name('show');
-        Route::post('/{orderItem}/update-status', [Vendor\OrderController::class, 'updateStatus'])->name('update-status');
+        Route::post('/{order}/update-status', [Vendor\OrderController::class, 'updateStatus'])->name('update-status');
         Route::post('/{order}/ship', [Vendor\OrderController::class, 'ship'])->name('ship');
     });
 

@@ -72,9 +72,9 @@
                     Ends in: <span id="countdown"></span>
                 </div>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 @foreach($flashSale->products->take(8) as $product)
-                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition h-full flex flex-col">
                     <a href="{{ route('product.show', $product->slug) }}">
                         @if($product->images->first())
                         <img src="{{ asset('storage/' . $product->images->first()->image_path) }}"
@@ -125,9 +125,9 @@
     <!-- Featured Products -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h2 class="text-3xl font-bold text-gray-900 mb-8">Featured Products</h2>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             @foreach($featuredProducts as $product)
-            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition duration-300 border border-gold-100 hover:border-gold-300">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition duration-300 border border-gold-100 hover:border-gold-300 h-full flex flex-col">
                 <a href="{{ route('product.show', $product->slug) }}">
                     @if($product->images->first())
                     <img src="{{ asset('storage/' . $product->images->first()->image_path) }}"
@@ -164,9 +164,9 @@
     <div class="bg-gradient-to-r from-gold-50 to-amber-50 py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-bold text-gray-900 mb-8">New Arrivals</h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 @foreach($newArrivals as $product)
-                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition duration-300 border border-gold-100 hover:border-gold-300">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition duration-300 border border-gold-100 hover:border-gold-300 h-full flex flex-col">
                     <a href="{{ route('product.show', $product->slug) }}">
                         @if($product->images->first())
                         <img src="{{ asset('storage/' . $product->images->first()->image_path) }}"

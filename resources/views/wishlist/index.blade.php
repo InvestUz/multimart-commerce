@@ -150,8 +150,8 @@
 <script>
 function removeFromWishlist(productId) {
     if (confirm('Are you sure you want to remove this product from your wishlist?')) {
-        fetch('{{ route('wishlist.destroy') }}', {
-            method: 'DELETE',
+        fetch('{{ route('wishlist.toggle') }}', {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'

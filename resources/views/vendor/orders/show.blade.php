@@ -11,19 +11,18 @@
         </a>
     </div>
 
-    @php
-        $vendorStatus = $order->items->first()->vendor_status;
-    @endphp
-
     <div class="bg-white rounded-lg shadow-sm overflow-hidden">
         <!-- Order Header -->
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
                     <h2 class="text-xl font-semibold text-gray-900">Order #{{ $order->order_number }}</h2>
-                    <p class="text-gray-600 mt-1">Placed on {{ $order->created_at->format('M d, Y g:i A') }}</p>
+                    <p class="text-sm text-gray-500 mt-1">Placed on {{ $order->created_at->format('F d, Y') }}</p>
                 </div>
                 <div class="mt-4 md:mt-0">
+                    <!-- We'll show the status of the first item as the overall order status for the vendor -->
+                    @php
+                        $vendorStatus = $order->items->first()->vendor_status;
                     @endphp
                     <span class="px-3 py-1 rounded-full text-sm font-medium
                         @if($vendorStatus === 'pending') bg-yellow-100 text-yellow-800
@@ -67,6 +66,19 @@
                                         @if($item->color) Color: {{ $item->color }} @endif
                                     </p>
                                 @endif
+                                <!-- Show individual item status -->
+                                <p class="text-sm mt-1">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full
+                                        @if($item->vendor_status === 'pending') bg-yellow-100 text-yellow-800
+                                        @elseif($item->vendor_status === 'processing') bg-blue-100 text-blue-800
+                                        @elseif($item->vendor_status === 'shipped') bg-indigo-100 text-indigo-800
+                                        @elseif($item->vendor_status === 'delivered') bg-green-100 text-green-800
+                                        @elseif($item->vendor_status === 'cancelled') bg-red-100 text-red-800
+                                        @else bg-gray-100 text-gray-800
+                                        @endif">
+                                        {{ ucfirst($item->vendor_status) }}
+                                    </span>
+                                </p>
                             </div>
                             <div class="text-right">
                                 <p class="text-sm font-medium text-gray-900">${{ number_format($item->price, 2) }}</p>
@@ -174,11 +186,11 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                                 <select name="status" id="order-status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="pending" {{ $order->items->first()->vendor_status === 'pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="processing" {{ $order->items->first()->vendor_status === 'processing' ? 'selected' : '' }}>Processing</option>
-                                    <option value="shipped" {{ $order->items->first()->vendor_status === 'shipped' ? 'selected' : '' }}>Shipped</option>
-                                    <option value="delivered" {{ $order->items->first()->vendor_status === 'delivered' ? 'selected' : '' }}>Delivered</option>
-                                    <option value="cancelled" {{ $order->items->first()->vendor_status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                    <option value="pending" {{ $vendorStatus === 'pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="processing" {{ $vendorStatus === 'processing' ? 'selected' : '' }}>Processing</option>
+                                    <option value="shipped" {{ $vendorStatus === 'shipped' ? 'selected' : '' }}>Shipped</option>
+                                    <option value="delivered" {{ $vendorStatus === 'delivered' ? 'selected' : '' }}>Delivered</option>
+                                    <option value="cancelled" {{ $vendorStatus === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                                 </select>
                             </div>
                             <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -189,7 +201,7 @@
                 </div>
 
                 <!-- Mark as Shipped -->
-                @if($order->items->first()->vendor_status === 'processing')
+                @if($vendorStatus === 'processing')
                 <div class="bg-white border border-gray-200 rounded-lg p-4 mt-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-3">Mark as Shipped</h3>
                     <form id="ship-order-form">

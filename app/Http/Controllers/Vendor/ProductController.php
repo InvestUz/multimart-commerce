@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -74,7 +75,8 @@ class ProductController extends Controller
             'weight' => 'nullable|numeric|min:0',
             'dimensions' => 'nullable|string|max:100',
             'is_active' => 'boolean',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'images' => 'required|array|min:1',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
             'tags' => 'nullable|string',
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string|max:500',
@@ -86,6 +88,22 @@ class ProductController extends Controller
             'meta_title_translations.*' => 'nullable|string|max:255',
             'meta_description_translations.*' => 'nullable|string|max:500',
             'meta_keywords_translations.*' => 'nullable|string|max:255',
+        ], [
+            'name.required' => 'Mahsulot nomi kiriting.',
+            'sku.required' => 'SKU majburiy.',
+            'sku.unique' => 'Bu SKU allaqachon mavjud.',
+            'category_id.required' => 'Kategoriya tanlang.',
+            'description.required' => 'Mahsulot tavsifini kiriting.',
+            'price.required' => 'Narx kiriting.',
+            'price.numeric' => 'Narx raqam bo\'lishi kerak.',
+            'stock.required' => 'Zaxira miqdorini kiriting.',
+            'stock.integer' => 'Zaxira miqdori butun son bo\'lishi kerak.',
+            'images.required' => 'Mahsulot uchun kamida bitta rasm yuklanishi kerak.',
+            'images.array' => 'Rasmlar array sifatida kerak.',
+            'images.min' => 'Kamida bitta rasm yuklanishi kerak.',
+            'images.*.image' => 'Tanlangan fayl rasm ekani kerak.',
+            'images.*.mimes' => 'Rasm JPEG, PNG, JPG yoki WEBP formatida ekani kerak.',
+            'images.*.max' => 'Rasm hajmi 2MB dan ortiq bolmasligi kerak.',
         ]);
 
         if (!$request->filled('slug')) {
@@ -160,8 +178,10 @@ class ProductController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Vendor product creation error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return back()->withInput()
-                ->with('error', 'Failed to create product. Please try again.');
+                ->with('error', 'Mahsulot yaratishda xato: ' . $e->getMessage());
         }
     }
 
