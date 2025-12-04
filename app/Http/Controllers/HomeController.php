@@ -61,14 +61,10 @@ class HomeController extends Controller
             ->take(8)
             ->get();
 
-        // Check if flash_sales table has date columns
-        $hasFlashSaleDateColumns = Schema::hasColumns('flash_sales', ['start_date', 'end_date']);
-
+        // Get active flash sale with products
         $flashSale = FlashSale::where('is_active', true)
-            ->when($hasFlashSaleDateColumns, function ($query) {
-                $query->where('start_date', '<=', now())
-                      ->where('end_date', '>=', now());
-            })
+            ->where('starts_at', '<=', now())
+            ->where('ends_at', '>=', now())
             ->with(['products.images', 'products.vendor'])
             ->first();
 

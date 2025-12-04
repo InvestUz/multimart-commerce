@@ -72,7 +72,7 @@
                         </div>
 
                         <!-- Navigation Links -->
-                        <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                        <div class="hidden space-y-2 sm:-my-px sm:ml-10 sm:flex sm:flex-col md:flex-row md:space-y-0 md:space-x-8">
                             <a href="{{ route('home') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('home') ? 'border-gold-500 text-gold-600' : 'border-transparent text-gray-500' }} hover:text-gold-600 hover:border-gold-300 text-sm font-medium">
                                 {{ __('messages.home') }}
                             </a>
@@ -266,8 +266,8 @@
 
         <!-- Footer -->
         <footer class="bg-gray-800 text-white mt-12">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                     <div>
                         <h3 class="text-lg font-semibold mb-4">{{ __('messages.about_us') }}</h3>
                         <p class="text-gray-400">Your trusted multi-vendor e-commerce platform.</p>

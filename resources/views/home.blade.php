@@ -72,24 +72,35 @@
                     Ends in: <span id="countdown"></span>
                 </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
                 @foreach($flashSale->products->take(8) as $product)
-                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition h-full flex flex-col">
-                    <a href="{{ route('product.show', $product->slug) }}">
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition group h-full flex flex-col border border-gray-100">
+                    <a href="{{ route('product.show', $product->slug) }}" class="block relative overflow-hidden bg-gray-50 aspect-square">
                         @if($product->images->first())
                         <img src="{{ asset('storage/' . $product->images->first()->image_path) }}"
                              alt="{{ $product->name }}"
-                             class="w-full h-48 object-cover">
-                        @endif
-                        <div class="p-4">
-                            <h3 class="text-sm font-medium text-gray-900 mb-2 line-clamp-2">{{ $product->name }}</h3>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-lg font-bold text-red-600">${{ number_format($product->price * 0.8, 2) }}</span>
-                                <span class="text-sm text-gray-500 line-through">${{ number_format($product->price, 2) }}</span>
-                                <span class="text-sm text-red-600 font-semibold">-20%</span>
-                            </div>
+                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                        @else
+                        <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-image text-2xl sm:text-3xl text-gray-400"></i>
                         </div>
+                        @endif
+                        <span class="absolute top-1 right-1 sm:top-2 sm:right-2 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-red-500 text-white text-xs font-bold rounded-full">-20%</span>
                     </a>
+                    <div class="p-2 sm:p-3 flex-1 flex flex-col">
+                        <a href="{{ route('product.show', $product->slug) }}" class="block flex-1">
+                            <h3 class="text-xs sm:text-sm font-medium text-gray-900 mb-1 line-clamp-2 hover:text-blue-600">{{ $product->name }}</h3>
+                        </a>
+                        <div class="flex items-center mb-1.5 sm:mb-2 gap-1">
+                            <span class="text-sm sm:text-base font-bold text-red-600">${{ number_format($product->price * 0.8, 2) }}</span>
+                            <span class="text-xs text-gray-500 line-through">${{ number_format($product->price, 2) }}</span>
+                        </div>
+                        @auth
+                        <button onclick="addToCart({{ $product->id }})" class="mt-auto w-full px-2 py-1.5 sm:px-3 sm:py-2 bg-blue-600 text-white rounded text-xs sm:text-sm font-medium hover:bg-blue-700 transition">
+                            <i class="fas fa-shopping-cart"></i> <span class="hidden sm:inline">Add to Cart</span><span class="sm:hidden">Add</span>
+                        </button>
+                        @endauth
+                    </div>
                 </div>
                 @endforeach
             </div>
@@ -98,7 +109,11 @@
 
     <script>
         // Countdown timer
-        const endDate = new Date('{{ $flashSale->end_date }}').getTime();
+        @if($flashSale && $flashSale->ends_at)
+        const endDate = new Date('{{ $flashSale->ends_at }}').getTime();
+        @else
+        const endDate = new Date().getTime() + (24 * 60 * 60 * 1000); // Default 24 hours from now
+        @endif
 
         function updateCountdown() {
             const now = new Date().getTime();
@@ -109,11 +124,14 @@
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            document.getElementById('countdown').innerHTML =
-                `${days}d ${hours}h ${minutes}m ${seconds}s`;
+            const countdownEl = document.getElementById('countdown');
+            if (countdownEl) {
+                countdownEl.innerHTML =
+                    `${days}d ${hours}h ${minutes}m ${seconds}s`;
 
-            if (distance < 0) {
-                document.getElementById('countdown').innerHTML = 'EXPIRED';
+                if (distance < 0) {
+                    countdownEl.innerHTML = 'EXPIRED';
+                }
             }
         }
 
@@ -125,36 +143,43 @@
     <!-- Featured Products -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h2 class="text-3xl font-bold text-gray-900 mb-8">Featured Products</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
             @foreach($featuredProducts as $product)
-            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition duration-300 border border-gold-100 hover:border-gold-300 h-full flex flex-col">
-                <a href="{{ route('product.show', $product->slug) }}">
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition group h-full flex flex-col border border-gray-100">
+                <a href="{{ route('product.show', $product->slug) }}" class="block relative overflow-hidden bg-gray-50 aspect-square">
                     @if($product->images->first())
                     <img src="{{ asset('storage/' . $product->images->first()->image_path) }}"
                          alt="{{ $product->name }}"
-                         class="w-full h-48 object-cover">
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
                     @endif
-                    <div class="p-4">
-                        <p class="text-xs text-gray-500 mb-1">{{ $product->vendor->shop_name }}</p>
-                        <h3 class="text-sm font-medium text-gray-900 mb-2 line-clamp-2">{{ $product->name }}</h3>
-                        <div class="flex items-center mb-2">
-                            <div class="flex text-gold-400">
-                                @for($i = 1; $i <= 5; $i++)
-                                    <i class="fas fa-star{{ $i <= ($product->reviews_avg_rating ?? 0) ? '' : '-o' }} text-xs"></i>
-                                @endfor
-                            </div>
-                            <span class="text-xs text-gray-500 ml-1">({{ $product->reviews_count }})</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-lg font-bold text-gray-900">${{ number_format($product->price, 2) }}</span>
-                            @auth
-                            <button onclick="addToCart({{ $product->id }})" class="text-gold-600 hover:text-gold-800">
-                                <i class="fas fa-shopping-cart"></i>
-                            </button>
-                            @endauth
-                        </div>
-                    </div>
                 </a>
+                <div class="p-2 sm:p-3 flex-1 flex flex-col">
+                    <p class="text-xs text-gray-500 mb-1 line-clamp-1">{{ $product->vendor->shop_name }}</p>
+                    <a href="{{ route('product.show', $product->slug) }}" class="block flex-1">
+                        <h3 class="text-xs sm:text-sm font-medium text-gray-900 mb-1 line-clamp-2 hover:text-blue-600">{{ $product->name }}</h3>
+                    </a>
+                    <div class="flex items-center mb-1.5 sm:mb-2 gap-1">
+                        <div class="flex text-yellow-400 text-xs">
+                            @for($i = 1; $i <= 5; $i++)
+                                <i class="fas fa-star{{ $i <= ($product->reviews_avg_rating ?? 0) ? '' : '-o' }}"></i>
+                            @endfor
+                        </div>
+                        <span class="text-xs text-gray-500">({{ $product->reviews_count }})</span>
+                    </div>
+                    <div class="mt-auto space-y-1.5 sm:space-y-2">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm sm:text-base font-bold text-gray-900">${{ number_format($product->price, 2) }}</span>
+                            @if($product->compare_price && $product->compare_price > $product->price)
+                            <span class="text-xs text-gray-500 line-through">${{ number_format($product->compare_price, 2) }}</span>
+                            @endif
+                        </div>
+                        @auth
+                        <button onclick="addToCart({{ $product->id }})" class="w-full px-2 py-1.5 sm:px-3 sm:py-2 bg-blue-600 text-white rounded text-xs sm:text-sm font-medium hover:bg-blue-700 transition">
+                            <i class="fas fa-shopping-cart"></i> <span class="hidden sm:inline">Add to Cart</span><span class="sm:hidden">Add</span>
+                        </button>
+                        @endauth
+                    </div>
+                </div>
             </div>
             @endforeach
         </div>
@@ -164,22 +189,44 @@
     <div class="bg-gradient-to-r from-gold-50 to-amber-50 py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-bold text-gray-900 mb-8">New Arrivals</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
                 @foreach($newArrivals as $product)
-                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition duration-300 border border-gold-100 hover:border-gold-300 h-full flex flex-col">
-                    <a href="{{ route('product.show', $product->slug) }}">
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition group h-full flex flex-col border border-gray-100">
+                    <a href="{{ route('product.show', $product->slug) }}" class="block relative overflow-hidden bg-gray-50 aspect-square">
                         @if($product->images->first())
                         <img src="{{ asset('storage/' . $product->images->first()->image_path) }}"
                              alt="{{ $product->name }}"
-                             class="w-full h-48 object-cover">
+                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
                         @endif
-                        <div class="p-4">
-                            <span class="inline-block px-2 py-1 text-xs font-semibold text-gold-800 bg-gold-100 rounded-full mb-2">New</span>
-                            <p class="text-xs text-gray-500 mb-1">{{ $product->vendor->shop_name }}</p>
-                            <h3 class="text-sm font-medium text-gray-900 mb-2 line-clamp-2">{{ $product->name }}</h3>
-                            <span class="text-lg font-bold text-gray-900">${{ number_format($product->price, 2) }}</span>
-                        </div>
+                        <span class="absolute top-1 left-1 sm:top-2 sm:left-2 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gold-500 text-white text-xs font-bold rounded-full">New</span>
                     </a>
+                    <div class="p-2 sm:p-3 flex-1 flex flex-col">
+                        <p class="text-xs text-gray-500 mb-1 line-clamp-1">{{ $product->vendor->shop_name }}</p>
+                        <a href="{{ route('product.show', $product->slug) }}" class="block flex-1">
+                            <h3 class="text-xs sm:text-sm font-medium text-gray-900 mb-1 line-clamp-2 hover:text-blue-600">{{ $product->name }}</h3>
+                        </a>
+                        <div class="flex items-center mb-1.5 sm:mb-2 gap-1">
+                            <div class="flex text-yellow-400 text-xs">
+                                @for($i = 1; $i <= 5; $i++)
+                                    <i class="fas fa-star{{ $i <= ($product->reviews_avg_rating ?? 0) ? '' : '-o' }}"></i>
+                                @endfor
+                            </div>
+                            <span class="text-xs text-gray-500">({{ $product->reviews_count }})</span>
+                        </div>
+                        <div class="mt-auto space-y-1.5 sm:space-y-2">
+                            <div class="flex items-center gap-1">
+                                <span class="text-sm sm:text-base font-bold text-gray-900">${{ number_format($product->price, 2) }}</span>
+                                @if($product->compare_price && $product->compare_price > $product->price)
+                                <span class="text-xs text-gray-500 line-through">${{ number_format($product->compare_price, 2) }}</span>
+                                @endif
+                            </div>
+                            @auth
+                            <button onclick="addToCart({{ $product->id }})" class="w-full px-2 py-1.5 sm:px-3 sm:py-2 bg-blue-600 text-white rounded text-xs sm:text-sm font-medium hover:bg-blue-700 transition">
+                                <i class="fas fa-shopping-cart"></i> <span class="hidden sm:inline">Add to Cart</span><span class="sm:hidden">Add</span>
+                            </button>
+                            @endauth
+                        </div>
+                    </div>
                 </div>
                 @endforeach
             </div>

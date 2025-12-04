@@ -122,60 +122,61 @@
 
                 <!-- Products -->
                 @if($products->isNotEmpty())
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
                     @foreach($products as $product)
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition group h-full flex flex-col">
-                        <a href="{{ route('product.show', $product->slug) }}" class="block relative">
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition group h-full flex flex-col border border-gray-100">
+                        <a href="{{ route('product.show', $product->slug) }}" class="block relative overflow-hidden bg-gray-50 aspect-square">
                             @if($product->images->first())
                             <img src="{{ asset('storage/' . $product->images->first()->image_path) }}"
                                  alt="{{ $product->name }}"
-                                 class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
+                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
                             @else
-                            <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                                <i class="fas fa-image text-4xl text-gray-400"></i>
+                            <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-image text-2xl sm:text-3xl text-gray-400"></i>
                             </div>
                             @endif
 
                             @if($product->compare_price && $product->compare_price > $product->price)
-                            <span class="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs font-semibold rounded">
+                            <span class="absolute top-1 right-1 sm:top-2 sm:right-2 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-red-500 text-white text-xs font-bold rounded-full">
                                 -{{ number_format((($product->compare_price - $product->price) / $product->compare_price) * 100) }}%
                             </span>
                             @endif
                         </a>
 
-                        <div class="p-4">
-                            <p class="text-xs text-gray-500 mb-1">{{ $product->vendor->shop_name }}</p>
-                            <a href="{{ route('product.show', $product->slug) }}" class="block">
-                                <h3 class="text-sm font-medium text-gray-900 mb-2 line-clamp-2 hover:text-indigo-600">
+                        <div class="p-2 sm:p-3 flex-1 flex flex-col">
+                            <p class="text-xs text-gray-500 mb-1 line-clamp-1">{{ $product->vendor->shop_name }}</p>
+                            <a href="{{ route('product.show', $product->slug) }}" class="block flex-1">
+                                <h3 class="text-xs sm:text-sm font-medium text-gray-900 mb-1 line-clamp-2 hover:text-blue-600">
                                     {{ $product->name }}
                                 </h3>
                             </a>
 
-                            <div class="flex items-center mb-2">
+                            <div class="flex items-center mb-1.5 sm:mb-2 gap-1">
                                 <div class="flex text-yellow-400 text-xs">
                                     @for($i = 1; $i <= 5; $i++)
                                         <i class="fas fa-star{{ $i <= ($product->reviews_avg_rating ?? 0) ? '' : '-o' }}"></i>
                                     @endfor
                                 </div>
-                                <span class="text-xs text-gray-500 ml-1">({{ $product->reviews_count }})</span>
+                                <span class="text-xs text-gray-500">({{ $product->reviews_count }})</span>
                             </div>
 
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <span class="text-lg font-bold text-gray-900">${{ number_format($product->price, 2) }}</span>
+                            <div class="mt-auto space-y-1.5 sm:space-y-2">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-sm sm:text-base font-bold text-gray-900">${{ number_format($product->price, 2) }}</span>
                                     @if($product->compare_price && $product->compare_price > $product->price)
-                                    <span class="text-xs text-gray-500 line-through block">${{ number_format($product->compare_price, 2) }}</span>
+                                    <span class="text-xs text-gray-500 line-through">${{ number_format($product->compare_price, 2) }}</span>
                                     @endif
                                 </div>
 
                                 @auth
                                 @if($product->stock > 0)
-                                <button onclick="addToCart({{ $product->id }})"
-                                        class="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm">
-                                    <i class="fas fa-shopping-cart"></i>
+                                <button onclick="addToCart({{ $product->id }})" class="w-full px-2 py-1.5 sm:px-3 sm:py-2 bg-blue-600 text-white rounded text-xs sm:text-sm font-medium hover:bg-blue-700 transition">
+                                    <i class="fas fa-shopping-cart"></i> <span class="hidden sm:inline">Add to Cart</span><span class="sm:hidden">Add</span>
                                 </button>
                                 @else
-                                <span class="text-xs text-red-600 font-semibold">Out of Stock</span>
+                                <button disabled class="w-full px-2 py-1.5 sm:px-3 sm:py-2 bg-gray-300 text-gray-600 rounded text-xs sm:text-sm font-medium">
+                                    Out of Stock
+                                </button>
                                 @endif
                                 @endauth
                             </div>
