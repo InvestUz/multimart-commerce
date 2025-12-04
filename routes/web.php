@@ -267,9 +267,8 @@ Route::prefix('super-admin')->name('super-admin.')->middleware(['auth', 'super_a
         Route::get('/customers', [SuperAdmin\ReportController::class, 'customers'])->name('customers');
     });
 
-    // Notifications
-    Route::get('/notifications', [SuperAdmin\DashboardController::class, 'notifications'])->name('notifications');
-    Route::get('/notifications/view', function () {
+    // Notifications page route for Super Admin
+    Route::get('/notifications', function () {
         return view('super-admin.notifications');
     })->name('notifications.view');
 });
@@ -348,6 +347,11 @@ Route::prefix('vendor')->name('vendor.')->middleware(['auth', 'vendor'])->group(
         Route::get('/products', [Vendor\ReportController::class, 'products'])->name('products');
         Route::get('/orders', [Vendor\ReportController::class, 'orders'])->name('orders');
     });
+    
+    // Notifications
+    Route::get('/notifications', function () {
+        return view('vendor.notifications');
+    })->name('notifications.view');
 });
 
 // Test route for debugging
