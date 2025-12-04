@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Review;
 use App\Models\Product;
 use App\Models\Order;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class ReviewController extends Controller
@@ -41,17 +42,44 @@ class ReviewController extends Controller
             return back()->with('error', 'You have already reviewed this product.');
         }
 
-        Review::create([
+        // Check if order is delivered (optional - remove if you want to allow reviews anytime)
+        if (!in_array($order->status, ['delivered', 'completed'])) {
+            return back()->with('error', 'You can only review products from delivered orders.');
+        }
+
+        $review = Review::create([
             'user_id' => auth()->id(),
             'product_id' => $validated['product_id'],
             'order_id' => $validated['order_id'],
             'rating' => $validated['rating'],
-            'title' => $validated['title'],
+            'title' => $validated['title'] ?? null,
             'comment' => $validated['comment'],
             'is_approved' => false,
+            'is_verified_purchase' => true, // Mark as verified purchase
         ]);
 
+        // Notify vendor and admins
+        $this->notifyAboutNewReview($review);
+
         return back()->with('success', 'Review submitted successfully! It will be visible after approval.');
+    }
+
+    /**
+     * Notify vendor and admins about new review
+     */
+    protected function notifyAboutNewReview(Review $review)
+    {
+        // Notify vendor
+        $product = $review->product;
+        if ($product->vendor) {
+            $product->vendor->notify(new \App\Notifications\NewReviewPosted($review));
+        }
+
+        // Notify admins
+        $admins = User::where('role', 'super_admin')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new \App\Notifications\NewReviewPosted($review));
+        }
     }
 
     public function update(Request $request, Review $review)

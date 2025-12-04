@@ -87,22 +87,60 @@ class HomeController extends Controller
         ));
     }
 
-    public function category($slug)
+    public function category(Request $request, $slug)
     {
         $category = Category::where('slug', $slug)
             ->where('is_active', true)
             ->firstOrFail();
 
-        $products = Product::where('category_id', $category->id)
-            ->where('is_active', true)
-            ->with(['vendor', 'images'])
+        // Build query for products
+        $query = Product::where('category_id', $category->id)
+            ->where('is_active', true);
+
+        // Apply subcategory filter
+        if ($request->filled('sub_category')) {
+            $query->where('sub_category_id', $request->sub_category);
+        }
+
+        // Apply price range filters
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', $request->min_price);
+        }
+
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', $request->max_price);
+        }
+
+        // Apply sorting
+        $sortBy = $request->input('sort', 'relevance');
+        switch ($sortBy) {
+            case 'price_low':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price_high':
+                $query->orderBy('price', 'desc');
+                break;
+            case 'newest':
+                $query->latest();
+                break;
+            case 'rating':
+                $query->orderByDesc('average_rating');
+                break;
+            default:
+                $query->latest();
+        }
+
+        $products = $query->with(['vendor', 'images'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
-            ->paginate(24);
+            ->paginate(24)
+            ->withQueryString();
 
         $subCategories = $category->subCategories()
             ->where('is_active', true)
-            ->withCount('products')
+            ->withCount(['products' => function($q) {
+                $q->where('is_active', true);
+            }])
             ->get();
 
         return view('category', compact('category', 'products', 'subCategories'));

@@ -187,19 +187,30 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'product_id' => $item->product_id,
                     'vendor_id' => $item->product->user_id,
+                    'product_name' => $item->product->name,
+                    'product_sku' => $item->product->sku ?? 'N/A',
                     'quantity' => $item->quantity,
                     'price' => $item->price,
+                    'size' => $item->size ?? null,
+                    'color' => $item->color ?? null,
                     'total' => $item->price * $item->quantity,
-                    'status' => 'pending',
+                    'vendor_status' => 'pending',
                 ]);
 
-                // Reduce stock
+                // Reduce stock and increment sales
                 $item->product->decrement('stock', $item->quantity);
+                $item->product->increment('total_sales', $item->quantity);
             }
 
-            // Update coupon usage
+            // Update coupon usage and notify admins
             if ($coupon) {
                 $coupon->increment('used_count');
+                
+                // Notify admins about coupon usage
+                $admins = User::where('role', 'super_admin')->get();
+                foreach ($admins as $admin) {
+                    $admin->notify(new \App\Notifications\CouponUsed($order, $coupon));
+                }
             }
 
             // Clear cart

@@ -68,8 +68,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{cart}', [CartController::class, 'destroy'])->name('destroy');
         Route::get('/count', [CartController::class, 'count'])->name('count');
         Route::post('/clear', [CartController::class, 'clear'])->name('clear');
-        Route::post('/apply-coupon', [CartController::class, 'applyCoupon'])->name('apply-coupon');
     });
+
+    // Coupon Routes
+    Route::post('/coupon/validate', [\App\Http\Controllers\CouponController::class, 'validateCoupon'])->name('cart.apply-coupon');
+    Route::post('/coupon/remove', [\App\Http\Controllers\CouponController::class, 'remove'])->name('coupon.remove');
 
     // Wishlist Routes
     Route::prefix('wishlist')->name('wishlist.')->group(function () {
