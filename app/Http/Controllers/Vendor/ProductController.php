@@ -43,8 +43,9 @@ class ProductController extends Controller
         }
 
         $products = $query->latest()->paginate(20);
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
 
-        return view('vendor.products.index', compact('products'));
+        return view('vendor.products.index', compact('products', 'categories'));
     }
 
     public function create()
@@ -58,6 +59,14 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
+        // DEBUG: Request ma'lumotlarini ko'rish
+        Log::info('Product Create Request Data:', [
+            'all_data' => $request->all(),
+            'is_active_raw' => $request->input('is_active'),
+            'has_images' => $request->hasFile('images'),
+            'images_count' => $request->hasFile('images') ? count($request->file('images')) : 0
+        ]);
+
         $validated = $request->validate([
             // Default language fields
             'name' => 'required|string|max:255',
@@ -74,7 +83,7 @@ class ProductController extends Controller
             'stock' => 'required|integer|min:0',
             'weight' => 'nullable|numeric|min:0',
             'dimensions' => 'nullable|string|max:100',
-            'is_active' => 'boolean',
+            'is_active' => 'nullable|in:0,1',
             'images' => 'required|array|min:1',
             'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
             'tags' => 'nullable|string',
@@ -112,6 +121,18 @@ class ProductController extends Controller
 
         // Set user_id (vendor_id column is actually user_id)
         $validated['user_id'] = auth()->id();
+        
+        // Handle is_active checkbox - convert to boolean
+        $validated['is_active'] = $request->has('is_active') && $request->input('is_active') == '1' ? true : false;
+        
+        // DEBUG: Validated data
+        Log::info('Product Validated Data:', [
+            'user_id' => $validated['user_id'],
+            'is_active' => $validated['is_active'],
+            'name' => $validated['name'] ?? 'N/A',
+            'price' => $validated['price'] ?? 'N/A',
+            'stock' => $validated['stock'] ?? 'N/A'
+        ]);
 
         // Remove fields that don't exist in the table or will be handled separately
         unset($validated['images']);
@@ -173,15 +194,23 @@ class ProductController extends Controller
 
             DB::commit();
 
+            Log::info('Product Created Successfully:', [
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'is_active' => $product->is_active,
+                'price' => $product->price,
+                'stock' => $product->stock
+            ]);
+
             return redirect()->route('vendor.products.index')
-                ->with('success', 'Product created successfully!');
+                ->with('success', '✅ Mahsulot muvaffaqiyatli qo\'shildi! Nomi: ' . $product->name . ' | Status: ' . ($product->is_active ? 'Active' : 'Inactive'));
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Vendor product creation error: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
             return back()->withInput()
-                ->with('error', 'Mahsulot yaratishda xato: ' . $e->getMessage());
+                ->with('error', '❌ Mahsulot yaratishda xato: ' . $e->getMessage());
         }
     }
 
@@ -318,7 +347,7 @@ class ProductController extends Controller
             DB::commit();
 
             return redirect()->route('vendor.products.index')
-                ->with('success', 'Product updated successfully!');
+                ->with('success', '✅ Mahsulot muvaffaqiyatli yangilandi! Nomi: ' . $product->name);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -347,7 +376,7 @@ class ProductController extends Controller
             DB::commit();
 
             return redirect()->route('vendor.products.index')
-                ->with('success', 'Product deleted successfully!');
+                ->with('success', '✅ Mahsulot muvaffaqiyatli o\'chirildi!');
 
         } catch (\Exception $e) {
             DB::rollBack();

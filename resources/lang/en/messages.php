@@ -19,4 +19,16 @@ return [
     'newsletter' => 'Newsletter',
     'subscribe' => 'Subscribe',
     'all_rights_reserved' => 'All rights reserved',
+    
+    // Orders
+    'My Orders' => 'My Orders',
+    'Track and manage your orders' => 'Track and manage your orders',
+    'No orders yet' => 'No orders yet',
+    'Start shopping to place your first order' => 'Start shopping to place your first order',
+    'Continue Shopping' => 'Continue Shopping',
+    'Total' => 'Total',
+    'View Details' => 'View Details',
+    'Paid' => 'Paid',
+    'items' => 'items',
+    'item' => 'item',
 ];

@@ -45,6 +45,48 @@ class OrderPolicy
             return true;
         }
 
+        // Vendor can update orders containing their products
+        if ($user->role === 'vendor') {
+            return $order->items()->where('vendor_id', $user->id)->exists();
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine if the user can update order status.
+     * This is specifically for status updates (not general order updates).
+     */
+    public function updateStatus(User $user, Order $order): bool
+    {
+        // Super admin can update any order status
+        if ($user->role === 'super_admin') {
+            return true;
+        }
+
+        // Vendor can update status for orders containing their products
+        if ($user->role === 'vendor') {
+            return $order->items()->where('vendor_id', $user->id)->exists();
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine if the user can update payment status.
+     */
+    public function updatePaymentStatus(User $user, Order $order): bool
+    {
+        // Only super admin can update payment status
+        if ($user->role === 'super_admin') {
+            return true;
+        }
+
+        // Vendor can also update payment status for their orders
+        if ($user->role === 'vendor') {
+            return $order->items()->where('vendor_id', $user->id)->exists();
+        }
+
         return false;
     }
 

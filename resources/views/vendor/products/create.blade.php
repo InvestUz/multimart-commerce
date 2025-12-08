@@ -4,6 +4,39 @@
 
 @section('content')
 <div class="p-6">
+    <!-- Error Messages -->
+    @if(session('error'))
+        <div class="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center justify-between" role="alert">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <span class="font-medium">{{ session('error') }}</span>
+            </div>
+            <button type="button" class="text-red-600 hover:text-red-800" onclick="this.parentElement.remove()">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+            </button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg" role="alert">
+            <div class="flex items-center mb-2">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <span class="font-medium">Iltimos, quyidagi xatolarni to'g'rilang:</span>
+            </div>
+            <ul class="list-disc list-inside ml-7 space-y-1">
+                @foreach($errors->all() as $error)
+                    <li class="text-sm">{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <!-- Page Header -->
     <div class="mb-6">
         <div class="flex items-center justify-between">
@@ -296,15 +329,19 @@
                                 @lang('Status')
                             </label>
                             <div class="flex items-center">
+                                <!-- Hidden input to ensure a value is always sent -->
+                                <input type="hidden" name="is_active" value="0">
                                 <input type="checkbox" 
                                        name="is_active" 
                                        id="is_active"
-                                       {{ old('is_active', true) ? 'checked' : '' }}
+                                       value="1"
+                                       {{ old('is_active', 1) ? 'checked' : '' }}
                                        class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                                 <label for="is_active" class="ml-2 block text-sm text-gray-900">
                                     @lang('Active')
                                 </label>
                             </div>
+                            <p class="mt-1 text-xs text-gray-500">✅ Belgilangan bo'lsa - Active, belgilanmagan bo'lsa - Inactive</p>
                         </div>
                     </div>
                 </div>

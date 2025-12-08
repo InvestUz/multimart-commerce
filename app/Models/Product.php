@@ -59,6 +59,8 @@ class Product extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'old_price' => 'decimal:2',
+        'compare_price' => 'decimal:2',
+        'cost_price' => 'decimal:2',
         'discount_percentage' => 'integer',
         'stock' => 'integer',
         'sizes' => 'array',
